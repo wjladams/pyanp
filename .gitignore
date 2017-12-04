@@ -3,3 +3,6 @@ __pycache__
 .project
 .pydevproject
 .idea
+build
+pyanp.egg-info
+dist
