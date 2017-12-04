@@ -1,5 +1,5 @@
 '''
-Created on Dec 2, 2017
+All pairwise matrix to priority vector calculations
 
 @author: Dr. Bill Adams
 '''
