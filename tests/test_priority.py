@@ -57,6 +57,7 @@ class Test(unittest.TestCase):
         result = priority.pri_expeigen(mat)
         expected = [ 0.0636715,  0.3597739,  0.2851016,  0.1905405,  0.1009125]
         npt.assert_almost_equal(result, expected, 7)
+        self.fail("This is matching llsm, which it shouldn't, something is wrong with geom_avg")
 
     def test_llsm(self):
         #Try a standard completely consistent matrix
@@ -78,6 +79,19 @@ class Test(unittest.TestCase):
         result = priority.pri_llsm(mat)
         expected = [ 0.0636715,  0.3597739,  0.2851016,  0.1905405,  0.1009125]
         npt.assert_almost_equal(result, expected, 7)
+
+    def test_harker_fix(self):
+        mat = priority.utmrowlist_to_npmatrix([2, 6, 0])
+        fixed = priority.harker_fix(mat)
+        npt.assert_almost_equal(fixed, [[1, 2, 6], [0.5, 2, 0], [1/6, 0, 2]], decimal=7)
+        mat = priority.utmrowlist_to_npmatrix([3, 6, 1/7])
+        fixed = priority.harker_fix(mat)
+        npt.assert_almost_equal(fixed, [[1, 3, 6], [1/3, 1, 1/7], [1/6, 7, 1]], decimal=7)
+
+    def test_pri_eigen(self):
+        mat = priority.utmrowlist_to_npmatrix([2, 6, 3])
+        eig = priority.pri_eigen(mat)
+        npt.assert_almost_equal(eig, [0.6, 0.3, 0.1], 7)
 
 
 if __name__ == "__main__":
