@@ -4,6 +4,7 @@ ANP row sensitivity calculations
 
 from copy import deepcopy
 from enum import Enum
+from pyanp.limitmatrix import calculus
 
 class P0Type(Enum):
     STANDARD=1
@@ -16,6 +17,10 @@ def _p_to_scalar(mat, p, p0=0.5):
         return (False, p/0.5)
     else:
         return (True, (1-p)/0.5)
+
+
+def _smart_p0():
+    pass
 
 
 def _calc_p0(orig_wt, p0mode):
@@ -49,3 +54,25 @@ def row_adjust(mat, row, p, clusters, scale_by_cluster=False, inplace=False, p0m
     if not inplace:
         return mat
 
+
+class InfluenceParams:
+    '''
+    A class to pass standard parameters to the influence analysis things
+    '''
+    def __init__(self, limit_fx=calculus, p0=P0Type.STANDARD):
+        self.limit_fx = calculus
+        self.p0 = p0
+
+
+def influence_marginal(mat, row, lr_or_avg=None, delta=1e-6, influence_params=None):
+    '''
+
+    :param mat: A matrix to do marginal influence on
+    :param row: The index of the row
+    :param lr_or_avg: A string, which when upper cased, if it starts with L, it means left, starts with R means right
+    otherwise it means average of L and R.
+    :param delta: The delta x to use for the derivative calculation
+    :param influence_params: The standard paramaters that any influence calculation uses.
+    :return: An np.array of size [N] where N is the size of the matrix mat, of the influnece scores.
+    '''
+    pass
