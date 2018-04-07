@@ -31,9 +31,9 @@ def calcp0(mat, row, cluster_nodes, orig, p0mode):
         # This is smart mode
         cont_alt = p0mode
         left_deriv = influence_marginal(mat, row, influence_nodes=None, cluster_nodes=cluster_nodes,
-                                        left_or_right=-1)
+                                        left_or_right=-1, p0mode=0.5)
         right_deriv = influence_marginal(mat, row, influence_nodes=None, cluster_nodes=cluster_nodes,
-                                        left_or_right=+1)
+                                        left_or_right=+1, p0mode=0.5)
         lval = left_deriv[cont_alt]
         rval = right_deriv[cont_alt]
         p0 = lval / (lval + rval)
@@ -79,30 +79,57 @@ def row_adjust(mat, row, p, cluster_nodes=None, inplace=False, p0mode=None):
         return mat
 
 
-class InfluenceParams:
-    '''
-    A class to pass standard parameters to the influence analysis things
-    '''
-    def __init__(self, limit_fx=calculus, p0mode=0.5):
-        self.limit_fx = calculus
-        self.p0mode = 0.5
 
+def p0mode_name(p0mode_value):
+    '''
+    Tells what kind of p0 the p0mode value is
+    :param p0mode_value:
+    :return:
+    '''
+    if isinstance(p0mode_value, int):
+        # This is smart p0
+        return 'smart'
+    elif isinstance(p0mode_value, float):
+        # Directvalue
+        return 'direct'
+    else:
+        return 'original weight'
 
-def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_or_right=None, delta=1e-6, influence_params=None):
+def p0mode_is_smart(p0mode_value):
+    '''
+    Tells what kind of p0 the p0mode value is
+    :param p0mode_value:
+    :return:
+    '''
+    return isinstance(p0mode_value, int)
+
+def p0mode_is_smart(p0mode_value):
+    '''
+    Tells what kind of p0 the p0mode value is
+    :param p0mode_value:
+    :return:
+    '''
+    return isinstance(p0mode_value, float)
+
+def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_or_right=None, delta=1e-6,
+                       p0mode=None, limit_matrix_calc=calculus):
     '''
 
     '''
     n = len(mat)
-    p0 = 0.5
     if influence_nodes is None:
         influence_nodes = [i for i in range(n) if i != row]
     orig_lim = calculus(mat)
     orig_pri = priority_from_limit(orig_lim)[influence_nodes]
     orig_pri /= sum(abs(orig_pri))
+    if not p0mode_is_smart(p0mode):
+        raise ValueError("p0mode must be a direct p0 value for marginal influence")
+    else:
+        p0 = p0mode
     if left_or_right <= 0:
         #Calculate left deriv
-        new_mat = row_adjust(mat, row, p0-delta, cluster_nodes, p0mode=p0)
-        lim = calculus(new_mat)
+        new_mat = row_adjust(mat, row, p0-delta, cluster_nodes, p0mode=p0mode)
+        lim = limit_matrix_calc(new_mat)
         pri = priority_from_limit(lim)[influence_nodes]
         pri /= sum(abs(pri))
         left_deriv = (pri - orig_pri) / -delta
@@ -113,7 +140,7 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
     if left_or_right >= 0:
         # Calculate left deriv
         new_mat = row_adjust(mat, row, p0 + delta, cluster_nodes, p0mode=p0)
-        lim = calculus(new_mat)
+        lim = limit_matrix_calc(new_mat)
         pri = priority_from_limit(lim)[influence_nodes]
         pri /= sum(abs(pri))
         right_deriv = (pri - orig_pri) / delta
@@ -125,7 +152,7 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
     rval = pd.Series(data=(left_deriv + right_deriv)/2, index=influence_nodes)
     return rval
 
-def row_sensitivity(mat, row, cluster_nodes=None, alt_indices=None, p0mode=None, graph=True):
+def influence_table(mat, row, cluster_nodes=None, alt_indices=None, p0mode=None, limit_matrix_calc=calculus, graph=True):
     xs = [i / 50 for i in range(1, 50)]
     n = len(mat)
     if alt_indices is None:
@@ -140,7 +167,7 @@ def row_sensitivity(mat, row, cluster_nodes=None, alt_indices=None, p0mode=None,
                 # This means p0mode is smart, and we should do it smart wrt the alt
                 p0mode = alt
             new_mat = row_adjust(mat, row, x, cluster_nodes=cluster_nodes, p0mode=p0mode)
-            new_lmt = calculus(new_mat)
+            new_lmt = limit_matrix_calc(new_mat)
             new_pri = priority_from_limit(new_lmt)
             new_pri[row] = 0
             new_pri /= sum(new_pri)
@@ -162,11 +189,11 @@ def row_sensitivity(mat, row, cluster_nodes=None, alt_indices=None, p0mode=None,
     else:
         return df, p0s
 
-def row_sensitivity_plot(df, p0s):
+def influence_table_plot(df, p0s):
     '''
 
-    :param df: The 1st returned component from row_sensitivity(graph=False): a dataframe
-    :param p0s: The 2nd returned component from row_sensitivity(graph=False): a Series of (x,y)'s
+    :param df: The 1st returned component from influence_table(graph=False): a dataframe
+    :param p0s: The 2nd returned component from influence_table(graph=False): a Series of (x,y)'s
     :return:
     '''
     xs = df[df.columns[0]]
