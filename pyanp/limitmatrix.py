@@ -271,3 +271,9 @@ def limit_newhierarchy(mat, with_limit=False, error=1e-10, col_scale_type = None
             rval[orig_row, orig_col] = C[i, j]
     rval = normalize(rval)
     return rval
+
+def priority_from_limit(limit_matrix):
+    rval = limit_matrix.sum(axis=1)
+    n = len(rval)
+    rval /= n
+    return rval

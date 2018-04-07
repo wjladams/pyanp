@@ -13,6 +13,20 @@ class MyTestCase(unittest.TestCase):
         adj = rs.row_adjust(mat, 0, 0.95, None)
         print(adj)
 
+    def test_calc_p0(self):
+        mat = np.array([
+            [0.2, 0.25, 0.05, 0.18],
+            [0.3, 0.3, 0.25, 0.07],
+            [0.4, 0.3, 0.5, 0.3],
+            [0.1, 0.15, 0.2, 0.45]
+        ])
+        info = rs.calcp0(mat, 0, cluster_nodes=None, orig=0.2, p0mode=1)
+        print(info)
+        info = rs.calcp0(mat, 0, cluster_nodes=None, orig=0.2, p0mode=2)
+        print(info)
+        info = rs.calcp0(mat, 0, cluster_nodes=None, orig=0.2, p0mode=3)
+        print(info)
+
     def test_rowadjust_cluster(self):
         mat = np.array([
             [0.2, 0.25, 0.05, 0.18],
