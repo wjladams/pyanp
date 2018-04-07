@@ -9,7 +9,7 @@ from setuptools import setup
 setup(name='pyanp',
       version='0.1.0',
       description='Math library for ANP/AHP calculations',
-      url='Not yet given',
+      url='https://github.com/wjladams/pyanp',
       author='Bill Adams',
       author_email='wjadams@decisionlens.com',
       license='MIT',

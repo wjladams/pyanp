@@ -31,25 +31,37 @@ def _calc_p0(orig_wt, p0mode):
     else:
         return _smart_p0()
 
-def row_adjust(mat, row, p, clusters, scale_by_cluster=False, inplace=False, p0mode=None):
+def row_adjust(mat, row, p, cluster_nodes=None, inplace=False, p0mode=None):
     n = len(mat)
     if not inplace:
         mat = deepcopy(mat)
+    if cluster_nodes is None:
+        cluster_nodes = range(n)
+    if row not in cluster_nodes:
+        raise ValueError("Row was not in cluster_nodes, cannot adjust like that")
     for c in range(n):
+        # First normalize column across cluster_nodes
+        total = sum(abs(mat[cluster_nodes, c]))
+        if total != 0:
+            mat[cluster_nodes, c] /= total
+        #Now we can continue
         orig = mat[row,c]
         if (orig != 0) and (orig != 1):
             p0 = _calc_p0(orig_wt = orig, p0mode = p0mode)
             scale_up, scalar = _p_to_scalar(mat, p, p0)
             if not scale_up:
                 mat[row,c]*=scalar
-                for r in range(n):
+                for r in cluster_nodes:
                     if r != row:
                         mat[r,c] *= (1-mat[row,c])/(1-orig)
             else:
                 mat[row,c] = 1 - scalar*(1-mat[row,c])
-                for r in range(n):
+                for r in cluster_nodes:
                     if r != row:
                         mat[r, c] *= scalar
+        #Now we normalize back to original sum
+        if total != 0:
+            mat[cluster_nodes,c] *= total
 
     if not inplace:
         return mat
