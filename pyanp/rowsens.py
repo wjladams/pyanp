@@ -31,9 +31,9 @@ def calcp0(mat, row, cluster_nodes, orig, p0mode):
         # This is smart mode
         cont_alt = p0mode
         left_deriv = influence_marginal(mat, row, influence_nodes=None, cluster_nodes=cluster_nodes,
-                                        left_or_right=-1, p0mode=0.5)
+                                        left_or_right=-1)
         right_deriv = influence_marginal(mat, row, influence_nodes=None, cluster_nodes=cluster_nodes,
-                                        left_or_right=+1, p0mode=0.5)
+                                        left_or_right=+1)
         lval = left_deriv[cont_alt]
         rval = right_deriv[cont_alt]
         p0 = lval / (lval + rval)
@@ -103,7 +103,7 @@ def p0mode_is_smart(p0mode_value):
     '''
     return isinstance(p0mode_value, int)
 
-def p0mode_is_smart(p0mode_value):
+def p0mode_is_direct(p0mode_value):
     '''
     Tells what kind of p0 the p0mode value is
     :param p0mode_value:
@@ -112,7 +112,7 @@ def p0mode_is_smart(p0mode_value):
     return isinstance(p0mode_value, float)
 
 def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_or_right=None, delta=1e-6,
-                       p0mode=None, limit_matrix_calc=calculus):
+                       p0mode=0.5, limit_matrix_calc=calculus):
     '''
 
     '''
@@ -122,7 +122,7 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
     orig_lim = calculus(mat)
     orig_pri = priority_from_limit(orig_lim)[influence_nodes]
     orig_pri /= sum(abs(orig_pri))
-    if not p0mode_is_smart(p0mode):
+    if not p0mode_is_direct(p0mode):
         raise ValueError("p0mode must be a direct p0 value for marginal influence")
     else:
         p0 = p0mode
@@ -152,20 +152,23 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
     rval = pd.Series(data=(left_deriv + right_deriv)/2, index=influence_nodes)
     return rval
 
-def influence_table(mat, row, cluster_nodes=None, alt_indices=None, p0mode=None, limit_matrix_calc=calculus, graph=True):
-    xs = [i / 50 for i in range(1, 50)]
+def influence_table(mat, row, p0s=None, cluster_nodes=None, influence_nodes=None, p0mode=None, limit_matrix_calc=calculus, graph=True):
+    if p0s is None:
+        xs = [i / 50 for i in range(1, 50)]
+    else:
+        xs = p0s
     n = len(mat)
-    if alt_indices is None:
-        alt_indices = [i for i in range(n) if i != row]
+    if influence_nodes is None:
+        influence_nodes = [i for i in range(n) if i != row]
     df = pd.DataFrame()
     p0s = pd.Series()
     df['x']=xs
-    for alt in alt_indices:
+    for alt in influence_nodes:
         ys = []
+        if isinstance(p0mode, int):
+            # This means p0mode is smart, and we should do it smart wrt the alt
+            p0mode = alt
         for x in xs:
-            if isinstance(p0mode, int):
-                # This means p0mode is smart, and we should do it smart wrt the alt
-                p0mode = alt
             new_mat = row_adjust(mat, row, x, cluster_nodes=cluster_nodes, p0mode=p0mode)
             new_lmt = limit_matrix_calc(new_mat)
             new_pri = priority_from_limit(new_lmt)
@@ -202,3 +205,31 @@ def influence_table_plot(df, p0s):
         plt.scatter(p0[0], p0[1], label=str(col)+" p0")
     plt.legend()
     plt.show()
+
+def influence_limit(mat, row, cluster_nodes=None, influence_nodes=None, delta=1e-6, p0mode=0.5, limit_matrix_calc=calculus, graph=True):
+    if not p0mode_is_direct(p0mode):
+        raise ValueError("p0mode must be a direct p0 value for limit influence")
+    n = len(mat)
+    if influence_nodes is None:
+        influence_nodes = [i for i in range(n) if i != row]
+    df = pd.DataFrame()
+    limits = pd.Series()
+    p0 = 1 - delta
+    p0s = pd.Series()
+    for alt in influence_nodes:
+        if isinstance(p0mode, int):
+            # This means p0mode is smart, and we should do it smart wrt the alt
+            p0mode = alt
+        new_mat = row_adjust(mat, row, p0, cluster_nodes=cluster_nodes, p0mode=p0mode)
+        new_lmt = limit_matrix_calc(new_mat)
+        new_pri = priority_from_limit(new_lmt)
+        row_pri = new_pri[row]
+        new_pri[row] = 0
+        new_pri /= sum(new_pri)
+        new_pri[row]=row_pri
+        y = new_pri[alt]
+        label = "Alt " + str(alt)
+        limits[label]=y
+        p0 = calcp0(mat, row, cluster_nodes, mat[row, alt], p0mode)
+        p0s[label]=p0
+    return limits, p0s
