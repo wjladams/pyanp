@@ -233,3 +233,29 @@ def influence_limit(mat, row, cluster_nodes=None, influence_nodes=None, delta=1e
         p0 = calcp0(mat, row, cluster_nodes, mat[row, alt], p0mode)
         p0s[label]=p0
     return limits, p0s
+
+def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.25, p0mode=0.5, limit_matrix_calc=calculus, graph=True):
+    if not p0mode_is_direct(p0mode):
+        raise ValueError("p0mode must be a direct p0 value for fixed distance influence")
+    n = len(mat)
+    if influence_nodes is None:
+        influence_nodes = [i for i in range(n) if i != row]
+    df = pd.DataFrame()
+    limits = pd.Series()
+    p0 = p0mode + delta
+    old_lmt = limit_matrix_calc(mat)
+    old_pri = priority_from_limit(old_lmt)
+    old_val = old_pri[row]
+    old_pri[row]=0
+    old_pri/=sum(old_pri)
+    old_pri[row]=old_val
+    new_mat = row_adjust(mat, row, p0, cluster_nodes=cluster_nodes, p0mode=p0mode)
+    new_lmt = limit_matrix_calc(new_mat)
+    new_pri = priority_from_limit(new_lmt)
+    row_pri = new_pri[row]
+    new_pri[row] = 0
+    new_pri /= sum(new_pri)
+    new_pri[row]=row_pri
+    diff = new_pri - old_pri
+    rval = pd.Series(data=diff[influence_nodes], index=influence_nodes)
+    return rval
