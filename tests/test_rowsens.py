@@ -73,6 +73,15 @@ class MyTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(adj[1,3], 0.25, decimal=4)
         np.testing.assert_almost_equal(adj[2,3]/adj[3,3], mat[2,3]/mat[3,3], decimal=12)
 
+    def test_influence_rank(self):
+        mat = np.array([
+            [0.2, 0.25, 0.05, 0.18],
+            [0.3, 0.3, 0.25, 0.07],
+            [0.4, 0.3, 0.5, 0.3],
+            [0.1, 0.15, 0.2, 0.45]
+        ])
+        influence_info = rs.influence_rank(mat, 0)
+        np.testing.assert_almost_equal(influence_info, 0.9841769522094728)
 
 if __name__ == '__main__':
     unittest.main()

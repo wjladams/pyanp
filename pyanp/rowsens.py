@@ -7,6 +7,8 @@ from copy import deepcopy
 from pyanp.general import linear_interpolate
 from enum import Enum
 from pyanp.limitmatrix import calculus, priority_from_limit
+from scipy.stats import rankdata
+import numpy as np
 import matplotlib.pyplot as plt
 
 #class P0Type(Enum):
@@ -234,28 +236,130 @@ def influence_limit(mat, row, cluster_nodes=None, influence_nodes=None, delta=1e
         p0s[label]=p0
     return limits, p0s
 
-def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.25, p0mode=0.5, limit_matrix_calc=calculus, graph=True):
-    if not p0mode_is_direct(p0mode):
-        raise ValueError("p0mode must be a direct p0 value for fixed distance influence")
-    n = len(mat)
-    if influence_nodes is None:
-        influence_nodes = [i for i in range(n) if i != row]
-    df = pd.DataFrame()
-    limits = pd.Series()
-    p0 = p0mode + delta
-    old_lmt = limit_matrix_calc(mat)
-    old_pri = priority_from_limit(old_lmt)
-    old_val = old_pri[row]
-    old_pri[row]=0
-    old_pri/=sum(old_pri)
-    old_pri[row]=old_val
-    new_mat = row_adjust(mat, row, p0, cluster_nodes=cluster_nodes, p0mode=p0mode)
+def row_adjust_priority(mat, row, p, cluster_nodes=None, inplace=False, p0mode=None, limit_matrix_calc=calculus,
+                        normalize_to_orig=False):
+    if normalize_to_orig:
+        old_lmt = limit_matrix_calc(mat)
+        old_pri = priority_from_limit(old_lmt)
+        old_val = old_pri[row]
+        old_sum = sum(old_pri) - old_val
+    else:
+        old_sum = 1
+    new_mat = row_adjust(mat, row, p, cluster_nodes=cluster_nodes, p0mode=p0mode)
     new_lmt = limit_matrix_calc(new_mat)
     new_pri = priority_from_limit(new_lmt)
     row_pri = new_pri[row]
     new_pri[row] = 0
-    new_pri /= sum(new_pri)
+    new_pri *= old_sum / sum(new_pri)
     new_pri[row]=row_pri
+    return new_pri
+
+def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.25, p0mode=0.5,
+                    limit_matrix_calc=calculus):
+    if not p0mode_is_direct(p0mode):
+        raise ValueError("p0mode must be a direct p0 value for fixed distance influence")
+    if influence_nodes is None:
+        n = len(mat)
+        influence_nodes = [i for i in range(n) if i != row]
+    p0 = p0mode + delta
+    old_pri = row_adjust_priority(mat, row, 0.5, cluster_nodes, p0mode=0.5, limit_matrix_calc=limit_matrix_calc)
+    new_pri = row_adjust_priority(mat, row,p0, cluster_nodes, p0mode=p0mode, limit_matrix_calc=limit_matrix_calc)
     diff = new_pri - old_pri
     rval = pd.Series(data=diff[influence_nodes], index=influence_nodes)
     return rval
+
+def rank_change(vec1, vec2, places_to_rank, rank_change_places=None, round_to_decimal=5):
+    if (rank_change_places is None):
+        rank_change_places = places_to_rank
+    elif isinstance(rank_change_places, int):
+        rank_change_places = [rank_change_places]
+    vec1 = np.round(vec1, round_to_decimal)
+    vec2 = np.round(vec2, round_to_decimal)
+    if len(rank_change_places) == 1:
+        rk1 = rankdata(vec1)[rank_change_places[0]]
+        rk2 = rankdata(vec2)[rank_change_places[0]]
+        return rk1 != rk2
+    else:
+        vec1 = vec1[rank_change_places]
+        vec2 = vec2[rank_change_places]
+        rk1 = rankdata(vec1)
+        rk2 = rankdata(vec2)
+        return any(rk1 != rk2)
+
+def influence_rank(mat, row, cluster_nodes=None, influence_nodes=None,
+                   limit_matrix_calc=calculus, rank_change_nodes=None, error=1e-5, upper_lower_both=0,
+                   round_to_decimal=5, return_full_info=False):
+    n = len(mat)
+    if influence_nodes is None:
+        influence_nodes = [i for i in range(n) if i != row]
+    if rank_change_nodes is None:
+        rank_change_nodes = influence_nodes
+    #Start with upper rank change
+    if upper_lower_both >= 0:
+        #Initial bounds
+        lower = 0.5
+        upper = 0.99999
+        p0mode = 0.5
+        lower_pri = row_adjust_priority(mat, row, lower, cluster_nodes, p0mode=p0mode, limit_matrix_calc=limit_matrix_calc)
+        upper_pri = row_adjust_priority(mat, row, upper, cluster_nodes, p0mode=p0mode, limit_matrix_calc=limit_matrix_calc)
+        if not rank_change(lower_pri, upper_pri, influence_nodes, rank_change_nodes, round_to_decimal):
+            # There is no rank change to start with
+            upper_rank_chg = 1
+        else:
+            while (upper - lower) > error:
+                mid = (upper + lower)/2
+                mid_pri = row_adjust_priority(mat, row, mid, cluster_nodes, p0mode=p0mode,
+                                              limit_matrix_calc=limit_matrix_calc)
+                if rank_change(lower_pri, mid_pri, influence_nodes, rank_change_nodes, round_to_decimal):
+                    upper = mid
+                    upper_pri = mid_pri
+                elif rank_change(mid_pri, upper_pri, influence_nodes, rank_change_nodes, round_to_decimal):
+                    lower = mid
+                    lower_pri = mid_pri
+                else:
+                    # This should not happen
+                    raise ValueError("Please report this error: rank influence impossible state")
+            upper_rank_chg = mid
+        upper_rank_value = (1 - upper_rank_chg) / (1 - 0.5)
+    if upper_lower_both <= 0:
+        #Initial bounds
+        lower = 0.00001
+        upper = 0.5
+        p0mode = 0.5
+        lower_pri = row_adjust_priority(mat, row, lower, cluster_nodes, p0mode=p0mode, limit_matrix_calc=limit_matrix_calc)
+        upper_pri = row_adjust_priority(mat, row, upper, cluster_nodes, p0mode=p0mode, limit_matrix_calc=limit_matrix_calc)
+        if not rank_change(lower_pri, upper_pri, influence_nodes, rank_change_nodes, round_to_decimal):
+            # There is no rank change to start with
+            lower_rank_chg = 0.0
+        else:
+            while (upper - lower) > error:
+                mid = (upper + lower)/2
+                mid_pri = row_adjust_priority(mat, row, mid, cluster_nodes, p0mode=p0mode,
+                                              limit_matrix_calc=limit_matrix_calc)
+                if rank_change(lower_pri, mid_pri, influence_nodes, rank_change_nodes, round_to_decimal):
+                    upper = mid
+                    upper_pri = mid_pri
+                elif rank_change(mid_pri, upper_pri, influence_nodes, rank_change_nodes, round_to_decimal):
+                    lower = mid
+                    lower_pri = mid_pri
+                else:
+                    # This should not happen
+                    raise ValueError("Please report this error: rank influence impossible state")
+            lower_rank_chg = mid
+        lower_rank_value = (lower_rank_chg)/(0.5 - 0)
+    if upper_lower_both < 0:
+        if return_full_info:
+            return lower_rank_value, lower_rank_chg
+        else:
+            return lower_rank_value
+    elif upper_lower_both > 0:
+        if return_full_info:
+            return upper_rank_value, upper_rank_chg
+        else:
+            return upper_rank_value
+    else:
+        rval = max(lower_rank_value, upper_rank_value)
+        if return_full_info:
+            return rval, lower_rank_value, lower_rank_chg, upper_rank_value, upper_rank_chg
+        else:
+            return rval
