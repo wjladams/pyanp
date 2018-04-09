@@ -4,20 +4,20 @@ author = "Dr. Bill Adams <wjladams@gmail.com>"
 
 
 
-_add_pairwise("ex2x2-1", "2x2 pairwise matrix with double value", ['2'],
+_add_pairwise("2x2ex1", "2x2 pairwise matrix with double value", ['2'],
               np.array([
                  [1, 2],
                  [1/2, 1]
              ]), author)
 
-_add_pairwise("ex3x3_236", "2 x, 3x, 6x consistent matrix", ["236", "consistent"],
+_add_pairwise("3x3-236", "2 x, 3x, 6x consistent matrix", ["236", "consistent"],
               np.array([
                  [1, 2, 6],
                  [1/2, 1, 3],
                  [1/6, 1/3, 1]
              ]), author)
 
-_add_pairwise("ex3x3_235", "2 x, 3x, 5x inconsistent matrix", ["235", "consistent"],
+_add_pairwise("3x3-235", "2 x, 3x, 5x inconsistent matrix", ["235", "consistent"],
               np.array([
                  [1, 2, 5],
                  [1/2, 1, 3],
