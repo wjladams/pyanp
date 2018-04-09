@@ -60,7 +60,7 @@ def _add_supermatrix(name, description, keywords, mat, author=''):
         raise ValueError("Already had a supermatrix example with that name")
     size = len(mat)
     keywords = _clean_keywords(keywords)
-    SUPERMATRIX_EXS.loc[name]=[description, keywords,  mat, size]
+    SUPERMATRIX_EXS.loc[name]=[description, keywords,  mat, size, author]
 
 
 def islist(val):
@@ -179,3 +179,5 @@ _add_supermatrix('3x3ex1', 'A simple 3x3 example', ['3'],
                     [0.6, 0.3, 1.0]
                 ])
                  )
+
+from pyanp.exmatcontrib import *
