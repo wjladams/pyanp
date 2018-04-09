@@ -12,3 +12,6 @@ or if you want to install the latest greatest:
 ```
 pip install git+https://github.com/wjladams/pyanp.git
 ```
+# Quickstart
+
+[A quickstart guide to basic functionality](quickstart.ipynb)
