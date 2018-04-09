@@ -4,4 +4,11 @@
 Python ANP Module and Resources
 
 # Installation
+Directly from pypi (this version will be more stable)
+```
+pip install pyanp
+```
+or if you want to install the latest greatest:
+```
 pip install git+https://github.com/wjladams/pyanp.git
+```
