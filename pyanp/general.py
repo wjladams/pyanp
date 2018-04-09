@@ -1,4 +1,6 @@
-
+'''
+Generally useful math and other functions.
+'''
 
 def linear_interpolate(xs, ys, x):
     '''
