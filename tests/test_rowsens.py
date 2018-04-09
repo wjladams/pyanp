@@ -2,24 +2,16 @@ import unittest
 import pyanp.rowsens as rs
 import numpy as np
 from pyanp.limitmatrix import normalize
+from pyanp.exmats import supermatrix_ex, SUPERMATRIX_EXS
 
 class MyTestCase(unittest.TestCase):
     def test_rowsens(self):
-        mat = np.array([
-            [0.3, 0.2, 0.0],
-            [0.1, 0.5, 0.0],
-            [0.6, 0.3, 1.0]
-        ])
+        mat = supermatrix_ex('3x3ex1')
         adj = rs.row_adjust(mat, 0, 0.95, None)
         print(adj)
 
     def test_calc_p0(self):
-        mat = np.array([
-            [0.2, 0.25, 0.05, 0.18],
-            [0.3, 0.3, 0.25, 0.07],
-            [0.4, 0.3, 0.5, 0.3],
-            [0.1, 0.15, 0.2, 0.45]
-        ])
+        mat = supermatrix_ex('4x4ex1')
         info = rs.calcp0(mat, 0, cluster_nodes=None, orig=0.2, p0mode=1)
         print(info)
         info = rs.calcp0(mat, 0, cluster_nodes=None, orig=0.2, p0mode=2)
@@ -28,12 +20,7 @@ class MyTestCase(unittest.TestCase):
         print(info)
 
     def test_rowadjust_cluster(self):
-        mat = np.array([
-            [0.2, 0.25, 0.05, 0.18],
-            [0.3, 0.3, 0.25, 0.07],
-            [0.4, 0.3, 0.5, 0.3],
-            [0.1, 0.15, 0.2, 0.45]
-        ])
+        mat = supermatrix_ex('4x4ex1')
         mat = normalize(mat)
         #print(mat)
         #Adjust very near 1, so row has most of cluster weight
@@ -74,12 +61,7 @@ class MyTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(adj[2,3]/adj[3,3], mat[2,3]/mat[3,3], decimal=12)
 
     def test_influence_rank(self):
-        mat = np.array([
-            [0.2, 0.25, 0.05, 0.18],
-            [0.3, 0.3, 0.25, 0.07],
-            [0.4, 0.3, 0.5, 0.3],
-            [0.1, 0.15, 0.2, 0.45]
-        ])
+        mat = supermatrix_ex('4x4ex1')
         influence_info = rs.influence_rank(mat, 0)
         np.testing.assert_almost_equal(influence_info, 0.9841769522094728)
 
