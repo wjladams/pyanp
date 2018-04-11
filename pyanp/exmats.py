@@ -2,8 +2,8 @@
 This is where we store standard examples of pairwise and supermatrices.
 
 '''
-import numpy as np
 import pandas as pd
+from pyanp.general import islist
 
 # The dataframe storing the pairwise example matrices
 PAIRWISE_EXS = pd.DataFrame(columns=["description", "keywords", "matrix", "size", "author"])
@@ -63,20 +63,6 @@ def _add_supermatrix(name, description, keywords, mat, author=''):
     SUPERMATRIX_EXS.loc[name]=[description, keywords,  mat, size, author]
 
 
-def islist(val):
-    '''
-    Simple function to check if a value is list like object
-    :param val:
-    :return:
-    '''
-    if val is None:
-        return False
-    elif isinstance(val, str):
-        return False
-    else:
-        return hasattr(val, "__len__")
-
-
 def matrix_matching(df=SUPERMATRIX_EXS, description=None, keywords=None, size=None, author=None):
     '''
     Finds matrices that match search criteria
@@ -116,7 +102,8 @@ def supermatrix_ex(name=None, description=None, keywords=None, size=None, author
     :param keywords: exact match keywords
     :param size: exact match size
     :param author: substring search author
-    :return:
+    :return: A single numpy.array item if only one matches the constraint, or a panda.Series
+    indexed by name or the resulting numpy.array s.
     '''
     global SUPERMATRIX_EXS
     if name is not None:
@@ -133,7 +120,8 @@ def pairwisematrix_ex(name=None, description=None, keywords=None, size=None, aut
     :param keywords: exact match keywords
     :param size: exact match size
     :param author: substring search author
-    :return:
+    :return: A single numpy.array item if only one matches the constraint, or a panda.Series
+    indexed by name or the resulting numpy.array s.
     '''
     global PAIRWISE_EXS
     if name is not None:

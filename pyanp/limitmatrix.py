@@ -8,23 +8,52 @@ from copy import deepcopy
 
 
 def _mat_pow2(mat, power):
-    n = int(np.ceil(np.log2(power)))
+    '''
+    Calculates mat ** N where N >= power and N is a power of 2.  It does this by squaring mat, and
+    squaring that, etc, until it reaches the desired level.  It takes at most log_2(power)+1 matrix
+    multiplications to do this, which is much preferred for large powers.
+    :param mat: The numpy array to raise to a power.
+    :param power: The power to be greater than or equal to
+    :return: The resulting power of the matrix
+    '''
     last = deepcopy(mat)
-    count = 0
     nextm = deepcopy(mat)
-    for i in range(n):
+    count=1
+    while count <= power:
         np.matmul(last, last, nextm)
         tmp = last
         last = nextm
         nextm = tmp
+        count *= 2
     return last
 
-def normalize(mat):
+def normalize(mat, inplace=False):
+    '''
+    Makes the columns of a matrix add to 1 (unless the column summed to zero, in which case it is left unchanged)
+    Does this by dividing each column by the sum of that column.
+    :param mat: The matrix to normalize
+    :param inplace: If true normalizes the matrix sent in, otherwise it leaves that matrix alone, and returns a
+    normalized copy
+    :return: If inplace=False, it returns the normalized matrix, leaving the param mat unchanged.  Otherwise it
+    returns nothing and normalizes the param mat.
+    '''
     div = mat.sum(axis=0)
     for i in range(len(div)):
         if div[i] == 0:
-            div[i] = 1
-    return mat/div
+            div[i] = 1.0
+    if not inplace:
+        return mat/div
+    else:
+        thetype = mat.dtype
+        #Let's check that the matrix can do float arith
+        old = mat[0,0]
+        mat[0,0] = 1./3.
+        if mat[0,0] == 0:
+            # It is an integer type matrix, which causes a fail
+            raise ValueError("Matrix cannot be integer type for inplace normalization.")
+        #Reset
+        mat[0,0]=old
+        np.divide(mat, div, out=mat)
 
 def hiearhcy_formula(mat):
     size = len(mat)

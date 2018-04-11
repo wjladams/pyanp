@@ -106,5 +106,19 @@ class MyTestCase(unittest.TestCase):
         np.testing.assert_equal((np.array([[0.]]), np.array([[1., 0.]]), np.array([[1.],[0.]]), np.array([[0., 0.],[1., 0.]])),
                                  result)
 
+    def test_normalize(self):
+        mat = np.array([
+            [1., 1, 0.],
+            [1, 0, 1],
+            [1, 1, 3]
+        ])
+        lm.normalize(mat, inplace=True)
+        expected = np.array([
+            [1/3, 1/2, 0],
+            [1/3, 0, 1/4],
+            [1/3, 1/2, 3/4]
+        ])
+        np.testing.assert_almost_equal(mat, expected)
+
 if __name__ == '__main__':
     unittest.main()

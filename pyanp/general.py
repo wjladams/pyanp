@@ -22,3 +22,18 @@ def linear_interpolate(xs, ys, x):
             return ys[i-1]+(x-xs[i-1])*slope
     #Should never make it here
     raise ValueError("linear interpolation failure")
+
+
+def islist(val):
+    '''
+    Simple function to check if a value is list like object
+    :param val:
+    :return:
+    '''
+    if val is None:
+        return False
+    elif isinstance(val, str):
+        return False
+    else:
+        return hasattr(val, "__len__")
+
