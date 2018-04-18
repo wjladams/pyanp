@@ -56,6 +56,12 @@ def normalize(mat, inplace=False):
         np.divide(mat, div, out=mat)
 
 def hiearhcy_formula(mat):
+    '''
+    Uses the hierarchy formula to calculate the limit matrix.  This is essentially the normalization of
+    the sum of higher powers of mat.
+    :param mat: A square nump.array that you wish to find the limit matrix of, using the hiearchy formula.
+    :return: The limit matrix, unless the matrix was not a hiearchy.  If the matrix was not a hierarchy we return None
+    '''
     size = len(mat)
     big = _mat_pow2(mat, size+1)
     if np.count_nonzero(big) != 0:
@@ -120,18 +126,30 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
                 return nextp / nextp.sum(axis=0)
 
 
-def normalize_cols_dist(mat1, mat2, tmp1, tmp2, tmp3, col_scale_type=None):
+def normalize_cols_dist(mat1, mat2, tmp1=None, tmp2=None, tmp3=None, col_scale_type=None):
     '''
+    Calculates the distance between matrices mat1 and mat2 after they have
+    been column normalized.  tmp1, tmp2, tmp3
+    are temporary matrices to store the normalized versions of things.  This
+    code could be called many times in a limit matrix calculation, and allocating
+    and freeing those temporary storage bits could take a lot of cycles.  This
+    way you allocate them once at the top level loop of the limit matrix calculation
+    and they are reused again and again.
 
+    If you do not wish to avail yourself of this savings, simply leave them as None's
+    and the algorithm will allocate as appropriate
     :param mat1:
     :param mat2:
-    :param tmp1:
-    :param tmp2:
-    :param tmp3:
+    :param tmp1: A temporary storage matrix of same size as mat1 and mat2.  If None, it will be allocated inside the fx.
+    :param tmp2: A temporary storage matrix of same size as mat1 and mat2.  If None, it will be allocated inside the fx.
+    :param tmp3: A temporary storage matrix of same size as mat1 and mat2.  If None, it will be allocated inside the fx.
     :param col_scale_type: A string if 'all' it scales mat1 by max(mat1) and similarly for mat2
     otherwise, it scales by column
-    :return:
+    :return: The maximum difference between the column normalized versions of mat1 and mat2
     '''
+    tmp1 = tmp1 if tmp1 is not None else deepcopy(mat1)
+    tmp2 = tmp2 if tmp2 is not None else deepcopy(mat1)
+    tmp3 = tmp3 if tmp3 is not None else deepcopy(mat1)
     if col_scale_type == "all":
         div1 = max(mat1)
         div2 = max(mat2)
@@ -153,9 +171,12 @@ def normalize_cols_dist(mat1, mat2, tmp1, tmp2, tmp3, col_scale_type=None):
 
 def zero_cols(full_mat, non_zero=False):
     '''
-    Returns the columns that are zero
-    :param mat:
-    :return:
+    Returns the list of indices of columns that are zero or non_zero
+    depending on the parameter non_zero
+    :param mat: The matrix to search over
+    :param non_zero: If False, returns the indices of columns that are zero, otherwise
+    returns indices of columns that a not zero.
+    :return: A list of indices of columns of the type determined by the parameter non_zero.
     '''
     size = len(full_mat)
     rval = []
@@ -178,8 +199,8 @@ def zero_cols(full_mat, non_zero=False):
 def hierarchy_nodes(mat):
     '''
     Returns the indices of the nodes that are hierarchy ones.  The others are not hierachy
-    :param mat:
-    :return:
+    :param mat: A supermatrix (scaled or non-scaled, both work).
+    :return: List of indices that are the nodes which are hierarhical.
     '''
     size = len(mat)
     start_pow = size
@@ -188,12 +209,15 @@ def hierarchy_nodes(mat):
 
 def two_two_breakdown(mat, upper_right_indices):
     '''
-
+    Given the indices for the upper right portion of a matrix, break the matrix
+    down into a 2x2 matrix with the submatrices in each piece.  Useful for
+    limit matrix calculations that split the problem up into the hierarchical and
+    network components and do separate calculations and then bring them together.
     :param mat: The matrix to split into
     A | B
     C | D
     form, where A is the "upper_right_indcies" and D is the opposite
-    :param upper_righ_indices:
+    :param upper_righ_indices: List of indices of the upper right positions.
     :return: A list of [A, B, C, D] of those matrices
     '''
     total_n = len(mat)
@@ -223,6 +247,14 @@ def two_two_breakdown(mat, upper_right_indices):
     return (A, B, C, D)
 
 def limit_sinks(mat, straight_normalizer=True):
+    '''
+    Performs the limit with sinks calculation.  We break up the matrix
+    into sinks and nonsinks, and use those pieces.
+    :param mat:
+    :param straight_normalizer: If False we normalize at each step, if True
+    we normalize at the end.
+    :return:
+    '''
     n = len(mat)
     nonsinks = zero_cols(mat, non_zero=True)
     sinks = zero_cols(mat, non_zero=False)
@@ -302,6 +334,12 @@ def limit_newhierarchy(mat, with_limit=False, error=1e-10, col_scale_type = None
     return rval
 
 def priority_from_limit(limit_matrix):
+    '''
+    Calculates the priority from a limit matrix, i.e. sums columns and divides by the number of
+    columns.
+    :param limit_matrix:
+    :return:
+    '''
     rval = limit_matrix.sum(axis=1)
     n = len(rval)
     rval /= n
