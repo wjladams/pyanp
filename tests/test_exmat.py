@@ -13,15 +13,13 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(len(mat), 4)
         self.assertEqual(mat[0,0], 0.2)
 
-    def test_elena1(self):
-        mat = pairwisematrix_ex("ex2x2-1.1")
-        #print(mat)
-        self.assertEqual(len(mat), 2)
-        self.assertEqual(mat[0,1], 5)
 
-        pri=pri_eigen(mat)
-        expected=[5/6,1/6]
-        assert_allclose(pri,expected)
+
+    def test_elena1_1(self):
+        mat = supermatrix_ex("SD_BigBurger30x30-1.1")
+        print(mat)
+        self.assertEqual(len(mat), 30)
+        self.assertEqual(mat[0,0], 0.)
 
 if __name__ == '__main__':
     unittest.main()
