@@ -224,8 +224,9 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
     :param limit_matrix_calc: A function which takes a single input, the matrix to take the limit of.
     :param graph: If True, we return a matplotlib graph, otherwise we return pandas.DataFrame, p0vals
     :return: If graph=True, we return nothing, but create a matplotlib object and call plt.show().  Otherwise
-    we return a pair of items.  The first is the dataframe of results, whose indices are "Alt 1", "Alt 2", ...
-    which corresponds to influence_nodes, and has 2 columns, 'x' is the pvals and 'y' is the resulting influence
+    we return a pair of items.  The first is the dataframe of results, whose indices are "Node 1", "Node 2", ...
+    which corresponds to influence_nodes (and the indices after "Node " are the influence_node indices)
+    and has 2 columns, 'x' is the pvals and 'y' is the resulting influence
     score (i.e. changed priority).  The second element is a pd.Series whose indices is the same as the dataframe
     and whose values are pairs of items (x,y) where x is the p0 value for the given alternative and the y is the
     influence score of that alternative at that p-value.
@@ -253,7 +254,7 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
             new_pri /= sum(new_pri)
             y = new_pri[alt]
             ys.append(y)
-        label = "Alt " + str(alt)
+        label = "Node " + str(alt)
         p0 = calcp0(mat, row, cluster_nodes, mat[row, alt], p0mode)
         x = p0
         y = linear_interpolate(xs, ys, x)
@@ -300,7 +301,8 @@ def influence_limit(mat, row, cluster_nodes=None, influence_nodes=None, delta=1e
     continuous.
     * otherwise we assume you want original weights to be the p0 value, and return the parameter `orig`
     :param limit_matrix_calc: A function which takes a single input, the matrix to take the limit of.
-    :return: A tuple of 2 items, the first is a pandas.Series whose indices are 'Alt 0', 'Alt 1', etc
+    :return: A tuple of 2 items, the first is a pandas.Series whose indices are 'Node 1', 'Node 2'
+     (and the indices after "Node " are the influence_node indices)
     and whose values are the limit value.  The second element of the returned tuple is a pandas.Series
     with the same indices and whose values are the p0 values we used for that alternative.
     '''
@@ -325,7 +327,7 @@ def influence_limit(mat, row, cluster_nodes=None, influence_nodes=None, delta=1e
         new_pri /= sum(new_pri)
         new_pri[row]=row_pri
         y = new_pri[alt]
-        label = "Alt " + str(alt)
+        label = "Node " + str(alt)
         limits[label]=y
         p0 = calcp0(mat, row, cluster_nodes, mat[row, alt], p0mode)
         p0s[label]=p0
