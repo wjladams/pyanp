@@ -82,17 +82,17 @@ def hiearhcy_formula(mat):
 def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_scale_type=None):
     '''
     Calculates the 'Calculus Type' limit matrix from superdecisions
-    :param mat:
-    :param error:
-    :param max_iters:
-    :param use_hierarchy_formula:
+    :param mat: The scaled supermatrix to calculate the limit matrix of
+    :param error: The maximum error to allow between iterations
+    :param max_iters: The maximum number of iterations before we give up, after we calculate the start power
+    :param use_hierarchy_formula: If True and the matrix is for a hierarchy we use that formula instead.
     :param col_scale_type: A string if 'all' it scales mat1 by max(mat1) and similarly for mat2
     otherwise, it scales by column
     :return:
     '''
     size = len(mat)
     diff = 0.0
-    start_pow = size+10
+    start_pow = size * size +10
     start = _mat_pow2(mat, start_pow)
     if use_hierarchy_formula and (max(abs(start))==0):
         # This matrix is for a hiearchy, use that formula
