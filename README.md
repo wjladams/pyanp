@@ -14,7 +14,7 @@ Python ANP Module and Resources
     ```
     pip install git+https://github.com/wjladams/pyanp.git
     ```
-  
-# Quickstart
+ 
+# Tutorials
 
-[A quickstart guide to basic functionality](quickstart.ipynb)
+* [Installing and getting started with Jupyter](tutorials/install.md)
