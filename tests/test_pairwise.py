@@ -1,5 +1,5 @@
 import unittest
-from pyanp.pairwise import Pairwise, geom_avg_mats
+from pyanp.pairwise import Pairwise, geom_avg_mats, add_place
 from numpy.testing import assert_array_equal, assert_allclose
 import numpy as np
 
@@ -33,6 +33,23 @@ class MyTestCase(unittest.TestCase):
         m2 = np.array([[1, 1/2, 1/3], [4, 5, 3]])
         avg = geom_avg_mats([m1, m2])
         assert_allclose(avg, [[1, 1, 1,], [4, 5, np.sqrt(18)]])
+
+    def test_addalt(self):
+        pw = Pairwise()
+        a1, a2, a3 = ["alt1", "a2", "a3"]
+        u1,u2 = ["Bill", "Leanne"]
+        pw.add_alt(a1)
+        pw.add_user(u1)
+        pw.add_alt(a2)
+        m = pw.matrix(u1)
+        assert_array_equal(m, np.identity(2))
+        pw.vote(u1, a1, a2, 5)
+        assert_allclose(m, [[1, 5.0], [1/5, 1]])
+
+    def test_addplace(self):
+        m1 = add_place(None)
+        m2 = add_place(m1)
+        assert_array_equal(m2, np.identity(2))
 
 if __name__ == '__main__':
     unittest.main()

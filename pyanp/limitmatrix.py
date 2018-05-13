@@ -94,7 +94,7 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
     diff = 0.0
     start_pow = size * size +10
     start = _mat_pow2(mat, start_pow)
-    if use_hierarchy_formula and (max(abs(start))==0):
+    if use_hierarchy_formula and (np.max(abs(start))==0):
         # This matrix is for a hiearchy, use that formula
         return hiearhcy_formula(mat)
     tmp1 = deepcopy(mat)

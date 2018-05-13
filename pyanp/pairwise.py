@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pyanp.general import islist
 from pyanp.priority import pri_eigen
+from copy import deepcopy
 
 class Pairwise:
     def __init__(self, alts=None, users=None, demographic_cols = None):
@@ -26,6 +27,9 @@ class Pairwise:
     def is_user(self, user_name):
         return user_name in self.df.index
 
+    def is_alt(self, alt_name):
+        return alt_name in self.alts
+
     def nalts(self):
         return len(self.alts)
 
@@ -43,6 +47,15 @@ class Pairwise:
         ncols = len(self.df.columns)
         data = [None]*(ncols-1)+[self._blank_pairwise()]
         self.df.loc[user_name] = data
+
+    def add_alt(self, alt_name):
+        if self.is_alt(alt_name):
+            raise ValueError("Alt "+alt_name+" already existed")
+        self.alts.append(alt_name)
+        for user in self.df.index:
+            mat = self.matrix(user)
+            self.df.loc[user, "Matrix"] = add_place(mat)
+
 
     def matrix(self, user_name):
         if user_name is None:
@@ -86,6 +99,24 @@ class Pairwise:
         mat = self.matrix(user_name)
         return self.priority_calc(mat)
 
+
+def add_place(mat):
+    '''
+    Adds a row and column to the end of a matrix, and makes the last entry 1, rest of the
+    added entries are zeroes
+    :param mat:
+    :return: New matrix
+    '''
+    if mat is None:
+        return np.array([[1]])
+    nrows = len(mat)
+    if nrows == 0:
+        return np.array([[1]])
+    ncols = len(mat[0])
+    rval = np.hstack([mat, [[0]]*nrows])
+    rval = np.vstack([rval, [0]*(ncols+1)])
+    rval[nrows,ncols]=1
+    return rval
 
 def geom_avg_mats(mats):
     if len(mats) <= 0:
