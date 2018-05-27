@@ -5,10 +5,11 @@ Group pairwise object and calculations
 import numpy as np
 import pandas as pd
 from pyanp.general import islist
+from pyanp.prioritizer import Prioritizer
 from pyanp.priority import pri_eigen
 from copy import deepcopy
 
-class Pairwise:
+class Pairwise(Prioritizer):
     def __init__(self, alts=None, users=None, demographic_cols = None):
         if alts is None:
             alts = []
@@ -97,8 +98,8 @@ class Pairwise:
 
     def priority(self, user_name):
         mat = self.matrix(user_name)
-        return self.priority_calc(mat)
-
+        rval = self.priority_calc(mat)
+        return pd.Series(data=rval, index=self.alts)
 
 def add_place(mat):
     '''
