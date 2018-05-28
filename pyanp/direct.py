@@ -33,3 +33,6 @@ class Direct(Prioritizer):
         if ptype is None:
             ptype = priority_type_default()
         return ptype.apply(self.data)
+
+    def add_user(self, uname):
+        pass

@@ -55,3 +55,6 @@ class Prioritizer:
 
     def nalts(self):
         raise ValueError("Should be overrriden in subclass")
+
+    def add_user(self, uname):
+        raise ValueError("Should be overriden in subclass")

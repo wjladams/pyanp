@@ -1,7 +1,8 @@
 from unittest import TestCase
 
-from pyanp.ahptree import AHPTree
+from pyanp.ahptree import AHPTree, create_ahptree
 from numpy.testing import assert_array_equal
+import pandas as pd
 
 class TestAHPTree(TestCase):
 
@@ -29,3 +30,15 @@ class TestAHPTree(TestCase):
         node2.set_alt_scores({a1:0.25, a2:1.0})
         rval = tree.priority()
         print(rval)
+
+    def test_read(self):
+        fname = "AHPTreeData.xlsx"
+        tree = create_ahptree(fname)
+        nodes = ['Goal', 'A1', 'A2', 'A3', 'A', 'B', 'B1', 'B2', 'C', 'C1', 'C2']
+        alts = ['Alt1', "Alt2", "Alt3"]
+        self.assertEqual(set(nodes), set(tree.nodenames()))
+        self.assertEqual(alts, tree.alt_names)
+        info = tree.priority()
+        print(info)
+        print(tree.priority(username="Bill"))
+        print(tree.priority(username=("Bill", "Leanne")))

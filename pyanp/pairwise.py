@@ -5,7 +5,7 @@ Group pairwise object and calculations
 import numpy as np
 import pandas as pd
 from pyanp.general import islist
-from pyanp.prioritizer import Prioritizer
+from pyanp.prioritizer import Prioritizer, PriorityType
 from pyanp.priority import pri_eigen
 from copy import deepcopy
 
@@ -58,13 +58,16 @@ class Pairwise(Prioritizer):
             self.df.loc[user, "Matrix"] = add_place(mat)
 
 
-    def matrix(self, user_name):
+    def matrix(self, user_name, createUnknownUser=True):
         if user_name is None:
             user_name = self.usernames()
         if isinstance(user_name, (str)):
             # We are just doing a single user
             if not self.is_user(user_name):
-                raise ValueError("No such user " + user_name)
+                if createUnknownUser:
+                    self.add_user(user_name)
+                else:
+                    raise ValueError("No such user " + user_name)
             return self.df.loc[user_name, "Matrix"]
         else:
             mats = [self.df.loc[user, 'Matrix'] for user in user_name]
@@ -96,8 +99,8 @@ class Pairwise(Prioritizer):
     def usernames(self):
         return list(self.df.index)
 
-    def priority(self, user_name):
-        mat = self.matrix(user_name)
+    def priority(self, username=None, ptype:PriorityType=None):
+        mat = self.matrix(username)
         rval = self.priority_calc(mat)
         return pd.Series(data=rval, index=self.alts)
 
