@@ -42,3 +42,4 @@ class TestAHPTree(TestCase):
         print(info)
         print(tree.priority(username="Bill"))
         print(tree.priority(username=("Bill", "Leanne")))
+        print(tree._repr_html_())

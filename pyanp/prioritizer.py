@@ -58,3 +58,6 @@ class Prioritizer:
 
     def add_user(self, uname):
         raise ValueError("Should be overriden in subclass")
+
+    def _repr_html(self, tab="\t"):
+        raise ValueError("Should override in subclass")

@@ -8,6 +8,7 @@ from pyanp.general import islist
 from pyanp.prioritizer import Prioritizer, PriorityType
 from pyanp.priority import pri_eigen
 from copy import deepcopy
+import re
 
 class Pairwise(Prioritizer):
     def __init__(self, alts=None, users=None, demographic_cols = None):
@@ -103,6 +104,17 @@ class Pairwise(Prioritizer):
         mat = self.matrix(username)
         rval = self.priority_calc(mat)
         return pd.Series(data=rval, index=self.alts)
+
+    def _repr_html(self, tab="\t"):
+        rval = tab+"<ul>\n"
+        for user in self.usernames():
+            mat = self.matrix(user)
+            matstr = tab+"\t"+str(mat)
+            matstr = re.sub("\n", "\n"+tab+"\t", matstr)
+            rval += tab+"\t"+"<li>"+str(user)+"\n"+matstr+"\n"
+        rval += tab+"</ul>"
+        return rval
+
 
 def add_place(mat):
     '''

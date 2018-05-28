@@ -75,7 +75,11 @@ class AHPTree(Prioritizer):
             self.nodenames(underNode=kid, rval=rval)
         return rval
 
-
+    def _repr_html_(self):
+        rval = "<ul>\n"
+        rval = rval+self.root._repr_html(tab="\t")
+        rval += "\n</ul>"
+        return rval
 
 class AHPNode:
     def __init__(self, name:str, alt_names):
@@ -168,6 +172,17 @@ class AHPNode:
     def alt_direct(self, node, val):
         self.set_alt_scores({node:val})
 
+    def _repr_html(self, tab=""):
+        rval = tab+"<li><b>Node:</b>"+self.name+"\n"
+        if self.has_children():
+            # Append child prioritizer info
+            rval += self.child_prioritizer._repr_html(tab+"\t")
+        if self.has_children():
+            rval += tab+"<ul>\n"
+            for child in self.children:
+                rval += child._repr_html(tab+"\t")
+            rval += "</ul>\n"
+        return rval
 
 
 class ColInfo:
@@ -292,7 +307,7 @@ def node_children(colinfos, node):
     return rval
 
 
-def create_ahptree(colinfos, currentAHPTree=None, currentNode=None):
+def create_ahptree(colinfos, currentAHPTree=None, currentNode=None) -> AHPTree:
     if isinstance(colinfos, str):
         colinfos = pd.read_excel(colinfos)
     df = colinfos
