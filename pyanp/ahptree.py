@@ -182,6 +182,13 @@ class AHPNode:
             for child in self.children:
                 rval += child._repr_html(tab+"\t")
             rval += "</ul>\n"
+        else:
+            # Should connect to alternatives, let's just report scores
+            altscoresstr = tab+"\t\t"+str(self.alt_scores)+"\n"
+            altscoresstr = re.sub("\n", "\n"+tab+"\t\t", altscoresstr)
+            altscoresstr = altscoresstr.rstrip()
+            rval += tab+"\t"+"<ul><li>AltScores=\n"+altscoresstr+"\n"
+            rval += tab+"\t"+"</ul>\n"
         return rval
 
 
