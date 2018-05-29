@@ -11,76 +11,6 @@ from pyanp.pairwise import Pairwise
 from pyanp.prioritizer import Prioritizer, PriorityType
 
 
-class AHPTree(Prioritizer):
-    def __init__(self, root_name="Goal", alt_names = None):
-        if alt_names is None:
-            alt_names = []
-        self.alt_names = alt_names
-        self.root = AHPNode(root_name, alt_names)
-
-    def add_alt(self, alt_name):
-        if alt_name in self.alt_names:
-            raise ValueError("Cannot add duplicate alternative name "+alt_name)
-        self.alt_names.append(alt_name)
-        self.root.add_alt(alt_name)
-
-    def nodepw(self, user, wrt, dom, rec, val):
-        node = self.get_node(wrt)
-        node.nodepw(user, dom, rec, val)
-
-    def isalt(self, name):
-        return name in self.alt_names
-
-    def direct(self, wrt, node, val):
-        nodeObj = self.get_node(wrt)
-        if self.isalt(node):
-            nodeObj.alt_direct(node, val)
-        else:
-            raise ValueError("Do not know how to direct non-alts, sorry")
-
-    def add_user(self, user):
-        self.root.add_user(user)
-
-    def nalts(self):
-        return len(self.alt_names)
-
-    def priority(self, username=None, ptype:PriorityType=None):
-        self.synthesize(username)
-        return self.root.alt_scores
-
-    def synthesize(self, username=None):
-        self.root.synthesize(username)
-
-    def add_child(self, childname, undername=None):
-        if undername is None:
-            under = self.root
-        else:
-            under = self.get_node(undername)
-        under.add_child(childname)
-
-    def get_nodes_hash(self):
-        return self.root.get_nodes_under_hash()
-
-    def get_node(self, nodename):
-        nodes = self.get_nodes_hash()
-        return nodes[nodename]
-
-    def nodenames(self, underNode=None, rval=None):
-        if rval is None:
-            rval = []
-        if underNode is None:
-            underNode = self.root
-        rval.append(underNode.name)
-        for kid in underNode.children:
-            self.nodenames(underNode=kid, rval=rval)
-        return rval
-
-    def _repr_html_(self):
-        rval = "<ul>\n"
-        rval = rval+self.root._repr_html(tab="\t")
-        rval += "\n</ul>"
-        return rval
-
 class AHPNode:
     def __init__(self, name:str, alt_names):
         self.children = []
@@ -191,6 +121,167 @@ class AHPNode:
             rval += tab+"\t"+"</ul>\n"
         return rval
 
+    def usernames(self, rval=None):
+        if rval is None:
+            rval = []
+        if self.child_prioritizer is not None:
+            users = self.child_prioritizer.usernames()
+            for user in users:
+                if user not in rval:
+                    rval.append(user)
+        if self.alt_prioritizer is not None:
+            for user in self.alt_prioritizer.usernames():
+                if user not in rval:
+                    rval.append(user)
+        return rval
+
+class AHPTree(Prioritizer):
+    def __init__(self, root_name="Goal", alt_names = None):
+        if alt_names is None:
+            alt_names = []
+        self.alt_names = alt_names
+        self.root = AHPNode(root_name, alt_names)
+
+    def add_alt(self, alt_name):
+        if alt_name in self.alt_names:
+            raise ValueError("Cannot add duplicate alternative name "+alt_name)
+        self.alt_names.append(alt_name)
+        self.root.add_alt(alt_name)
+
+    def nodepw(self, user, wrt, dom, rec, val):
+        node = self.get_node(wrt)
+        node.nodepw(user, dom, rec, val)
+
+    def isalt(self, name):
+        return name in self.alt_names
+
+    def direct(self, wrt, node, val):
+        nodeObj = self.get_node(wrt)
+        if self.isalt(node):
+            nodeObj.alt_direct(node, val)
+        else:
+            raise ValueError("Do not know how to direct non-alts, sorry")
+
+    def add_user(self, user):
+        self.root.add_user(user)
+
+    def usernames(self):
+        return self.root.usernames()
+
+    def nalts(self):
+        return len(self.alt_names)
+
+    def priority(self, username=None, ptype:PriorityType=None):
+        self.synthesize(username)
+        return self.root.alt_scores
+
+    def synthesize(self, username=None):
+        self.root.synthesize(username)
+
+    def add_child(self, childname, undername=None):
+        if undername is None:
+            under = self.root
+        else:
+            under = self.get_node(undername)
+        under.add_child(childname)
+
+    def get_nodes_hash(self):
+        return self.root.get_nodes_under_hash()
+
+    def get_node(self, nodename):
+        nodes = self.get_nodes_hash()
+        return nodes[nodename]
+
+    def nodenames(self, underNode=None, rval=None):
+        if rval is None:
+            rval = []
+        if underNode is None:
+            underNode = self.root
+        rval.append(underNode.name)
+        for kid in underNode.children:
+            self.nodenames(underNode=kid, rval=rval)
+        return rval
+
+    def _repr_html_(self):
+        rval = "<ul>\n"
+        rval = rval+self.root._repr_html(tab="\t")
+        rval += "\n</ul>"
+        return rval
+
+    def global_priority(self, username = None, rvalSeries=None, fromNode:AHPNode=None, parentMultiplier=1.0) -> pd.Series:
+        if rvalSeries is not None:
+            rval = rvalSeries
+        else:
+            rval = pd.Series(dtype=float)
+        if fromNode is None:
+            fromNode = self.root
+        rval[fromNode.name] = parentMultiplier
+        if not fromNode.has_children():
+            # We are done
+            return rval
+        kidpris = fromNode.child_prioritizer.priority(username=username)
+        for kid, pri in zip(fromNode.children, kidpris):
+            self.global_priority(username, rval, fromNode=kid, parentMultiplier=parentMultiplier * pri)
+        return rval
+
+    def global_priority_table(self):
+        average = self.global_priority()
+        rval = pd.DataFrame(index=average.index)
+        rval['Group']=average
+        users = self.usernames()
+        for user in users:
+            rval[user] = self.global_priority(user)
+        return rval
+
+    def priority_table(self):
+        average = self.priority()
+        rval = pd.DataFrame(index=average.index)
+        rval['Group']=average
+        users = self.usernames()
+        for user in users:
+            rval[user] = self.priority(user)
+        return rval
+
+    def incon_std(self, username, wrt:str):
+        node = self.get_node(wrt)
+        if isinstance(node.child_prioritizer, Pairwise):
+            return node.child_prioritizer.incon_std(username)
+        else:
+            return None
+
+    def nodes(self, underNode:AHPNode=None, rval=None):
+        if underNode is None:
+            underNode = self.root
+        if rval is None:
+            rval = []
+        rval.append(underNode)
+        for node in underNode.children:
+            self.nodes(node, rval)
+        return rval
+
+    def incon_std_series(self, username):
+        nodes = self.nodes()
+        nodesWithKids = [node for node in nodes if node.has_children()]
+        rval = [self.incon_std(username, node.name) for node in nodesWithKids if node.has_children()]
+        rval = pd.Series(data=rval, index=[node.name for node in nodesWithKids])
+        return rval
+
+    def incond_std_table(self):
+        average = self.incon_std_series(username=None)
+        rval = pd.DataFrame(index=average.index)
+        rval['Group']=average
+        users = self.usernames()
+        for user in users:
+            rval[user] = self.incon_std_series(user)
+        return rval
+
+    def matrix(self, username, wrt:str):
+        node = self.get_node(wrt)
+        pri = node.child_prioritizer
+        if isinstance(pri, Pairwise):
+            return pri.matrix(username)
+        else:
+            return None
 
 class ColInfo:
     __wrtre = re.compile("^(.+)\s+vs\s+(.+)\s+wrt\s+(.+)$")

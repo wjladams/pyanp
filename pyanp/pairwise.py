@@ -4,6 +4,7 @@ Group pairwise object and calculations
 
 import numpy as np
 import pandas as pd
+from pyanp.priority import incon_std
 from pyanp.general import islist
 from pyanp.prioritizer import Prioritizer, PriorityType
 from pyanp.priority import pri_eigen
@@ -73,6 +74,11 @@ class Pairwise(Prioritizer):
         else:
             mats = [self.df.loc[user, 'Matrix'] for user in user_name]
             return geom_avg_mats(mats)
+
+    def incon_std(self, user_name):
+        matrix = self.matrix(user_name)
+        return incon_std(matrix)
+
 
     def alt_index(self, alt_name_or_index):
         if isinstance(alt_name_or_index, (int)):

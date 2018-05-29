@@ -175,7 +175,7 @@ def inconsistency_divisor(mat_or_size):
     else:
         return 1.98 * (1 - (size - 1) / (size * (size - 1) / 2))
 
-def incon_std(mat, error = 1e-10, use_harker = False):
+def incon_std(mat, error = 1e-10, use_harker = True):
     '''
     Calculates the inconsistency of a pairwise matrix using the standard AHP/ANP theoretic formula.
 

@@ -36,3 +36,6 @@ class Direct(Prioritizer):
 
     def add_user(self, uname):
         pass
+
+    def usernames(self):
+        return []
