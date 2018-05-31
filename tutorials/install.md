@@ -4,7 +4,7 @@ This tutorial will lead you through:
 1. [What is Python, Jupyter, a Jupyter notebook, and Anaconda?](#1-what-is-python-jupyter-and-a-jupyter-notebook)
 2. [Installing Anaconda, which includes Python and Jupyter](#2-installing-anaconda)
 3. [Running the Jupyter notebook server on Windows, Mac, or Linux systems](#3-running-jupyter)
-4. [Creating a new Jupyter notebook, and opening existing Jupyter notebooks.](#4-creating-a-jupyter-notebooks)
+4. [Creating a new Jupyter notebook, and opening existing Jupyter notebooks.](#4-creating-a-jupyter-notebook)
 5. [Installing the `pyanp` library and doing a quick sample calculation to verify `pyanp` is installed correclty.](#5-installing-pyanp)
 
 ## 1. What is Python, Jupyter and a Jupyter notebook?
@@ -26,7 +26,7 @@ The easiest way to install Jupyter and python altogether is to install anaconda:
 
 See [How to run Jupyter](http://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/execute.html) for instructions.
 
-## 4. Creating a Jupyter Notebooks
+## 4. Creating a Jupyter Notebook
 
 After you have Jupyter running simply click on the NEW menu button in the upper right corner.  See [this excellent 
 getting started medium post for more information](https://medium.com/codingthesmartway-com-blog/getting-started-with-jupyter-notebook-for-python-4e7082bd5d46#bc16)
