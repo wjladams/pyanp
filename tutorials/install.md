@@ -15,9 +15,27 @@ This tutorial will lead you through:
 * **Anaconda** is a distribution of python with loads of extra libraries already bundles (e.g. scipy, pandas, numpy, and many more) that also includes Jupyter.  It is the fastest way to get started with Jupyter and Python.
 
 ## 2. Installing Anaconda
+The easiest way to install Jupyter and python altogether is to install anaconda:
+
+1. Download the installer from [https://www.anaconda.com/download].
+1. Choose the **Python 3.6 version**
+1. Download and install as you normally would for your operating system.
+1. See [https://docs.anaconda.com/anaconda/install/] for detailed installation instructions for each operating system (Windows, Mac, and Linux).
 
 ## 3. Running Jupyter
 
+See [How to run Jupyter](http://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/execute.html) for instructions.
+
 ## 4. Creating and Opening Jupyter Notebooks
 
+After you have Jupyter running simply click on the NEW menu button in the upper right corner.  See [this excellent 
+getting started medium post for more information](https://medium.com/codingthesmartway-com-blog/getting-started-with-jupyter-notebook-for-python-4e7082bd5d46#bc16)
+
 ## 5. Installing `pyanp`
+
+Once you have Jupyter and python installed, in a cmd window on Windows (or a terminal on Mac/Linux) run the following command
+
+```
+pip install pyanp
+```
+that will download the latest version of pyanp and install it automatically.
