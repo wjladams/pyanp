@@ -17,10 +17,10 @@ This tutorial will lead you through:
 ## 2. Installing Anaconda
 The easiest way to install Jupyter and python altogether is to install anaconda:
 
-1. Download the installer from https://www.anaconda.com/download.
+1. Download the installer from [https://www.anaconda.com/download](https://www.anaconda.com/download).
 1. Choose the **Python 3.6 version**
 1. Download and install as you normally would for your operating system.
-1. See https://docs.anaconda.com/anaconda/install/ for detailed installation instructions for each operating system (Windows, Mac, and Linux).
+1. See [https://docs.anaconda.com/anaconda/install/](https://docs.anaconda.com/anaconda/install/) for detailed installation instructions for each operating system (Windows, Mac, and Linux).
 
 ## 3. Running Jupyter
 
