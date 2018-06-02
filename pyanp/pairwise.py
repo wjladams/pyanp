@@ -87,8 +87,8 @@ class Pairwise(Prioritizer):
             raise ValueError("No such alt "+alt_name_or_index)
         return self.alts.index(alt_name_or_index)
 
-    def vote(self, user_name, row, col, val=0):
-        mat = self.matrix(user_name)
+    def vote(self, user_name, row, col, val=0, createUnknownUser=True):
+        mat = self.matrix(user_name, createUnknownUser=createUnknownUser)
         row = self.alt_index(row)
         col = self.alt_index(col)
         if row == col:

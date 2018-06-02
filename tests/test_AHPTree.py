@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pyanp.ahptree import AHPTree, create_ahptree
+from pyanp.ahptree import AHPTree, ahptree_fromdf
 from numpy.testing import assert_array_equal, assert_allclose
 import pandas as pd
 
@@ -36,7 +36,7 @@ class TestAHPTree(TestCase):
 
     def test_read(self):
         fname = "AHPTreeData.xlsx"
-        tree = create_ahptree(fname)
+        tree = ahptree_fromdf(fname)
         nodes = ['Goal', 'A1', 'A2', 'A3', 'A', 'B', 'B1', 'B2', 'C', 'C1', 'C2']
         alts = ['Alt1', "Alt2", "Alt3"]
         self.assertEqual(set(nodes), set(tree.nodenames()))
@@ -65,6 +65,6 @@ class TestAHPTree(TestCase):
         tree.global_priority_table()
         print(tree.incon_std_series(username))
         print(tree.incond_std_table())
-        mat = tree.matrix('Bill', 'A')
+        mat = tree.node_pwmatrix('Bill', 'A')
         print(mat)
         print(incon_std(mat))
