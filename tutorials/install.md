@@ -39,3 +39,8 @@ Once you have Jupyter and python installed, in a cmd window on Windows (or a ter
 pip install pyanp
 ```
 that will download the latest version of pyanp and install it automatically.
+Or if you want to install the bleeding edge from github do:
+```
+pip install git+https://github.com/wjladams/pyanp.git
+```
+

@@ -5,12 +5,14 @@ Python ANP Module and Resources
 
 # Installation
 
-1. First you need to install Jupyter, follow the directions at [Installing Jupyter using Anaconda and Conda](http://jupyter.readthedocs.io/en/latest/install.html#id3)
-2. Now you can directly install by running the following from a Terminal (or Windows console)
+1. First you need to install Jupyter and Python.  The easiest way is to install anaconda:
+    1. Download and install anaconda with **Python 3.6** from [anaconda.com](https://www.anaconda.com/download)
+    3. Further instructions available at [Installing Jupyter using Anaconda and Conda](http://jupyter.readthedocs.io/en/latest/install.html#id3)
+2. Now you can directly install `pyanp` from a Terminal (or Windows console)
     ```
     pip install pyanp
     ```
-    or if you want to install the latest greatest:
+    or if you want to install the bleeding edge from github:
     ```
     pip install git+https://github.com/wjladams/pyanp.git
     ```
