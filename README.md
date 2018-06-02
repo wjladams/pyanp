@@ -12,7 +12,7 @@ Python ANP Module and Resources
     ```
     pip install pyanp
     ```
-    or if you want to install the latest greatest:
+    or if you want to install the bleeding edge from github:
     ```
     pip install git+https://github.com/wjladams/pyanp.git
     ```
