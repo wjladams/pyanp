@@ -444,6 +444,7 @@ def create_ahptree(colinfos, currentAHPTree=None, currentNode=None) -> AHPTree:
                 rec = info.rec()
                 for user in colseries.index:
                     val = colseries[user]
+                    # print(val)
                     if (not np.isnan(val)) and (user != "all"):
                         currentAHPTree.nodepw(user, wrt, dom, rec, val)
             elif info.isdirect():

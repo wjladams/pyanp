@@ -63,7 +63,7 @@ class Pairwise(Prioritizer):
     def matrix(self, user_name, createUnknownUser=True):
         if user_name is None:
             user_name = self.usernames()
-        if isinstance(user_name, (str)):
+        if isinstance(user_name, (str, int, float)):
             # We are just doing a single user
             if not self.is_user(user_name):
                 if createUnknownUser:
