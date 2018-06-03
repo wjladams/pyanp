@@ -1,6 +1,7 @@
 '''
 Contains all limit matrix calculations
-@author Dr. Bill Adams
+
+.. moduleauthor: Dr. Bill Adams
 '''
 
 import numpy as np

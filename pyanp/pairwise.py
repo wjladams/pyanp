@@ -1,5 +1,7 @@
 '''
-Group pairwise object and calculations
+Group pairwise object and calculations.  See :py:mod:`pyanp.priority` for
+all methods of calculating priorities from a pairwise comparison matrix
+in addition to inconsistency calculations.
 '''
 
 import numpy as np
@@ -12,6 +14,19 @@ from copy import deepcopy
 import re
 
 class Pairwise(Prioritizer):
+    '''
+    Creates a new group pairwise comparison object.
+
+    :param alts: The list alternatives (things you are comparing) to start with.
+        Should be a list-like object of strings.
+
+    :param users: The users to start the group pairwise comparison object
+        with.  It should be a list-like object of strings.
+
+    :param demographic_cols: The names of the demographic columns to start
+        the group pairwise comparison object with.  It should be a list-like
+        object of strings.
+    '''
     def __init__(self, alts=None, users=None, demographic_cols = None):
         if alts is None:
             alts = []
@@ -27,31 +42,68 @@ class Pairwise(Prioritizer):
         self.priority_calc = pri_eigen
 
 
-    def is_user(self, user_name):
+    def is_user(self, user_name:str)->bool:
+        '''
+        Checks if a user exists in this group pairwise comparison object.
+
+        :param user_name: The name of the user to look for
+
+        :return: True/False
+        '''
         return user_name in self.df.index
 
-    def is_alt(self, alt_name):
+    def is_alt(self, alt_name:str)->bool:
+        '''
+        Checks if an alternative (a thing you are pairwise comparing) exists in
+        this group pairwise comparison object.
+
+        :param alt_name: The name of the alternative to check for.
+
+        :return: True/False
+        '''
         return alt_name in self.alts
 
-    def nalts(self):
+    def nalts(self)->int:
+        '''
+        :return: The number of alternatives (things you are pairwise comparing)
+            in this group pairwise comparison object.
+        '''
         return len(self.alts)
 
     def _blank_pairwise(self):
         '''
         Creates a blank pairwise comparison for the right number of alts
-        :return:
         '''
         nalts = self.nalts()
         return np.identity(nalts)
 
-    def add_user(self, user_name):
+    def add_user(self, user_name:str)->None:
+        '''
+        Adds a user to this group pairwise comparison object.
+
+        :param user_name: The name of the user to add
+
+        :return: Nothing
+
+        :raises ValueError: If the user already existed.
+        '''
         if self.is_user(user_name):
             raise ValueError("User "+user_name+" already existed")
         ncols = len(self.df.columns)
         data = [None]*(ncols-1)+[self._blank_pairwise()]
         self.df.loc[user_name] = data
 
-    def add_alt(self, alt_name):
+    def add_alt(self, alt_name:str)->None:
+        '''
+        Adds an alternative (thing you are pairwise comparing) to this group
+        pairwise comparison object.
+
+        :param alt_name: The name of the alternative to add.
+
+        :return: Nothing
+
+        :raises ValueError: If the alternative already esisted.
+        '''
         if self.is_alt(alt_name):
             raise ValueError("Alt "+alt_name+" already existed")
         self.alts.append(alt_name)
@@ -60,7 +112,25 @@ class Pairwise(Prioritizer):
             self.df.loc[user, "Matrix"] = add_place(mat)
 
 
-    def matrix(self, user_name, createUnknownUser=True):
+    def matrix(self, user_name, createUnknownUser:bool=True)->np.ndarray:
+        '''
+        Gets the pairwise comparison for a user or group of users.
+
+        :param user_name: The name/names of the user/users to get the
+            comparisons of.  If None, that means to get the group average for
+            all users.  If it is a string, that means get the pairwise comparison
+            matrix of that user.  If it is a list-like of strings, we get the
+            group average matrix for all of those users.
+
+        :param createUnknownUser: If True and the user_name did not exist, we
+            should create that user.  Otherwise throw an error if we request
+            for a non-existant user.
+
+        :return: The numpy array of the pairwise comparisons.
+
+        :raises ValueError: If createUnknownUser=False and we request for a single
+            non-existant user.
+        '''
         if user_name is None:
             user_name = self.usernames()
         if isinstance(user_name, (str, int, float)):
@@ -75,19 +145,62 @@ class Pairwise(Prioritizer):
             mats = [self.df.loc[user, 'Matrix'] for user in user_name]
             return geom_avg_mats(mats)
 
-    def incon_std(self, user_name):
+    def incon_std(self, user_name)->float:
+        '''
+        Calculates the standard Saaty pairwise comparison inconsistency for
+        a user or group of users.
+
+        :param user_name: The name/names of the users to get the inconsistency
+        of.  If None, we get the inconsistency of the group average matrix.  If
+        it is a string, we get the inconsistency of that user.  If it is a list
+        of users, we get the inconsistency of the group average for that list of
+        users.
+
+        :return: The Saaty inconsistency score.
+        '''
         matrix = self.matrix(user_name)
         return incon_std(matrix)
 
 
-    def alt_index(self, alt_name_or_index):
+    def alt_index(self, alt_name_or_index)->int:
+        '''
+        Find the index (integer location) of the given alternative in the
+        pairwise comparison matrices.
+
+        :param alt_name_or_index: If this is an integer, we simply return that
+            integer.  Otherwise we look up the index of the alternative name in
+            the list of alternatives in this object.
+
+        :return: The index that alternative has in the pairwise comparison
+            matrices.
+        '''
         if isinstance(alt_name_or_index, (int)):
             return alt_name_or_index
         if alt_name_or_index not in self.alts:
             raise ValueError("No such alt "+alt_name_or_index)
         return self.alts.index(alt_name_or_index)
 
-    def vote(self, user_name, row, col, val=0, createUnknownUser=True):
+    def vote(self, user_name:str, row, col, val:float=0, createUnknownUser:bool=True)->None:
+        '''
+        Changes a single pairwise value for a single user.
+
+        :param user_name: The string name of the user whose pairwise comparison
+            vote you wish to change.
+
+        :param row: The integer or string name of the row to compare at.
+
+        :param col: The integer or string name of the column to compare at.
+
+        :param val: The new pairwise comparison value
+
+        :param createUnknownUser: If True and user_name does not exist in this
+            object, we will create it first, then do the comparison.  Otherwise
+            it throws an exception for unknown users.
+
+        :return: Nothing
+
+        :raises ValueError: If the user does not exist and createUnknownUsers is False.
+        '''
         mat = self.matrix(user_name, createUnknownUser=createUnknownUser)
         row = self.alt_index(row)
         col = self.alt_index(col)
@@ -100,13 +213,49 @@ class Pairwise(Prioritizer):
         else:
             mat[col, row] = 1.0/val
 
-    def unvote(self, user_name, row, col):
+    def unvote(self, user_name:str, row, col, createUnknownUser:bool=True)->None:
+        '''
+        Unsets a pairwise comparison
+
+        :param user_name: The string name of the user whose pairwise comparison
+            vote you wish to unset.
+
+        :param row: The integer or string name of the row to compare at.
+
+        :param col: The integer or string name of the column to compare at.
+
+        :param createUnknownUser: If True and user_name does not exist in this
+            object, we will create it first, then do the unset operation.
+            Otherwise it throws an exception for unknown users.
+
+        :return: Nothing
+
+        :raises ValueError: If the user does not exist and createUnknownUsers is False.
+        '''
         self.vote(user_name, row, col, val=0)
 
     def usernames(self):
+        '''
+        :return: A list of the users in this group pairwise comparison object.
+        '''
         return list(self.df.index)
 
     def priority(self, username=None, ptype:PriorityType=None):
+        '''
+        Calculates the resulting priority for the given user / users.
+
+        :param user_name: The name/names of the users to calculate the priority
+        of.  If None, we get the priority of the group average matrix.  If
+        it is a string, we get the priority of that user.  If it is a list
+        of users, we get the priority of the group average for that list of
+        users.
+
+        :param ptype: How should we normalize the resulting priorities
+            (if at all).
+
+        :return: A pandas.Series whose indices are the alternative names and
+            whose values are the priorities of those alternatives.
+        '''
         mat = self.matrix(username)
         rval = self.priority_calc(mat)
         return pd.Series(data=rval, index=self.alts)
@@ -126,7 +275,9 @@ def add_place(mat):
     '''
     Adds a row and column to the end of a matrix, and makes the last entry 1, rest of the
     added entries are zeroes
-    :param mat:
+
+    :param mat: The matrix to add an entry to.
+
     :return: New matrix
     '''
     if mat is None:
@@ -140,7 +291,14 @@ def add_place(mat):
     rval[nrows,ncols]=1
     return rval
 
-def geom_avg_mats(mats):
+def geom_avg_mats(mats)->np.ndarray:
+    '''
+    Calculates the geometric average of the given matrices.
+
+    :param mats: A list-like object of numpy arrays
+
+    :return: A numpy array that is the geometric average
+    '''
     if len(mats) <= 0:
         raise ValueError('Need more then 0 matrices')
     nrows, ncols = mats[0].shape
