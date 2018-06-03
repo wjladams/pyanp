@@ -9,11 +9,13 @@ import numpy as np
 #### Priority Vector Calculations                 ####
 ######################################################
 
-def geom_avg(vals):
+def geom_avg(vals)->float:
     """
     Compute the geometric average of a list of values.
     
-    The values need not be a list, but simply anything with a len() and []
+    :param vals: A list-like of numbers
+
+    :return: The geometric average of the values.
     """
     rval=1.0
     count = 0
@@ -26,16 +28,19 @@ def geom_avg(vals):
         rval = pow(rval, 1.0/count)
     return(rval)
 
-def geom_avg_mat(mat, coeffs = None):
+def geom_avg_mat(mat, coeffs = None)->np.ndarray:
     '''
-    Computes the geometric average of the columns of a matrix.  Returns
-    an np.array of dimension [nRowsOfMat], i.e. a vector.  
+    Computes the geometric average of the columns of a matrix.
     
     :param mat: Must be an numpy.array of shape [nRows, nCols]
+
     :param coeffs:  If not None, it is a list like object with nColsOfMat elements.
-    We multiply column 0 of mat by coeffs[0], column 1 of mat by coeffs[1], etc
-    and then do the geometric average of the columns.  Essentially this weights the
-    columns.
+        We multiply column 0 of mat by coeffs[0], column 1 of mat by coeffs[1], etc
+        and then do the geometric average of the columns.  Essentially this weights the
+        columns.
+
+    :return:  An np.array of dimension [nRowsOfMat], i.e. a vector. that is the
+        weighted geometric average of the columns of the matrix mat.
     '''
     size = mat.shape[0]
     rval = np.ones([size])
@@ -52,11 +57,14 @@ def geom_avg_mat(mat, coeffs = None):
 
 def pri_expeigen(mat, error = 1e-10):
     """
-    Calculates priorities using exponential (aka multiplicative eigenvector)
+    Calculates priorities using exponential (aka multiplicative) eigenvector
 
     :param mat: An numpy.array of shape [size, size] of pairwise comparisions.
+
     :param error=1e-10: The convergence error term
-    :return numpy.array: The resulting exponential eigenvector as a numpy.array of shape [size]
+
+    :return numpy.array: The resulting exponential eigenvector as a numpy.array
+        of shape [size]
     """
     size = mat.shape[0]
     vec = np.ones([size])
@@ -72,9 +80,13 @@ def pri_expeigen(mat, error = 1e-10):
 
 def pri_llsm(mat):
     '''
-    Calculates the priorities using the geometric mean method, aka Log Least Squares Method (LLSM).
+    Calculates the priorities using the geometric mean method, aka Log Least
+        Squares Method (LLSM).
+
     :param mat: An numpy.array of dimension [size,size]
-    :return numpy.array: The resulting llsm priority vector as a numpy.array of shape [size]
+
+    :return numpy.array: The resulting llsm priority vector as a numpy.array of
+        shape [size]
     '''
     rval = geom_avg_mat(mat)
     rval = rval / sum(rval)
@@ -83,11 +95,13 @@ def pri_llsm(mat):
 # LLSM is the same geometric average, so let's make a synonym
 pri_geomavg = pri_llsm
 
-def harker_fix(mat):
+def harker_fix(mat:np.ndarray)->np.ndarray:
     """
     Performs Harker's fix on the numpy matrix mat.  It returns a copy with the fix.
     The function does not change the matrix mat.
-    :param mat: A numpy array
+
+    :param mat: A square numpy.
+
     :return: A copy of mat with Harker's fix applied to it
     """
     nrows = mat.shape[0]
@@ -102,13 +116,17 @@ def harker_fix(mat):
     return(rval)
 
 
-def pri_eigen(mat, error = 1e-10, use_harker = False, return_eigenval=False):
+def pri_eigen(mat:np.ndarray, error:float = 1e-10, use_harker:bool = False,
+              return_eigenval:bool=False):
     '''
-    Calculates the largest eigen vector of a matrix
+    Calculates the largest eigen vector of a matrix.
     
     :param mat: A square numpy array.
+
     :param use_harker=False: Should we apply Harker's fix before computing?
+
     :param return_eigenval=False: If True it returns only the eigenvalue, otherwise only returns the eigenvector.
+
     :return numpy.array: The largest eigenvector that is the normalized (sum to 1) largest eigenvector as a numpy.array
         of shape [size] if return_eigenval=False, otherwise returns the eigenvalue as a number.
     '''
@@ -129,13 +147,14 @@ def pri_eigen(mat, error = 1e-10, use_harker = False, return_eigenval=False):
         return(vec)
 
 
-def inconsistency_divisor(mat_or_size):
+def inconsistency_divisor(mat_or_size)->float:
     '''
     Calculates the inconsistency divisor for a matrix, or the size of a matrix.
+    The inconsistency divisor is what you divide (eigenvalue - size) by to get the inconsistency.
 
-    The inconsistency divisor is what you divid (eigenvalue - size) by to get the inconsistency.
-    :param mat_or_size: Either a pairwise matrix, or simply the size of the pairwise matrix (which is
-    what determines the inconsistency divisor).
+    :param mat_or_size: Either a pairwise matrix, or simply the size of the pairwise
+        matrix (which is what determines the inconsistency divisor).
+
     :return: The inconsistency divisor
     '''
     size = size_array_like(mat_or_size)
@@ -175,13 +194,17 @@ def inconsistency_divisor(mat_or_size):
     else:
         return 1.98 * (1 - (size - 1) / (size * (size - 1) / 2))
 
-def incon_std(mat, error = 1e-10, use_harker = True):
+def incon_std(mat:np.ndarray, error:float = 1e-10, use_harker:bool = True)->float:
     '''
-    Calculates the inconsistency of a pairwise matrix using the standard AHP/ANP theoretic formula.
+    Calculates the inconsistency of a pairwise matrix using the standard
+    Saaty AHP/ANP theoretic formula.
 
     :param mat: A numpy.array of shape [size,size] of pairwise comparisons.
+
     :param error: The error to use for the pri_eigen calculation
+
     :param use_harker: Should we apply Harker's fix before the calculation?
+
     :return: The inconsistency.
     '''
     size = mat.shape[0]
@@ -194,13 +217,20 @@ def incon_std(mat, error = 1e-10, use_harker = True):
 #########################################################
 def prerr_euclidratio(pwmat, privec):
     '''
-    Calculates the euclidean distance error between the pairwise matrix and the ratio matrix of a priority vector.
+    Calculates the euclidean distance error between the pairwise matrix and the
+    ratio matrix of a priority vector.
 
     This calculates using the following formula
-    sqrt( sum_{i,j} (  (pwmat[i, j] - privec[i]/privec[j])**2 ))
+
+    .. math::
+        \\sqrt{ \\sum_{i,j}  \\left(\\frac{pwmat[i, j] - privec[i]}{privec[j]} \\right)^2}
+
     :param pwmat: A numpy.array of shape [size, size] of pairwise comparisons.
-    :param privec: A numpy.array of share [size] of the priority vector
-    :return:
+
+    :param privec: A numpy.array of share [size] of the priority vector to compare
+        this pairwise matrix to.
+
+    :return: The error/distance between the ratio matrix and the matrix.
     '''
     rval = 0
     diffsum = 0
@@ -219,11 +249,21 @@ def prerr_euclidratio(pwmat, privec):
 
 def prerr_ratio_avg(pwmat, privec):
     '''
-    Calculates priority error using the arithmetic average of ratio distance of pwmat from the ratio matrix of privec
+    Calculates priority error using the arithmetic average of ratio distance of
+    pwmat from the ratio matrix of privec
 
     It averages:
-    ratio_greater_1(pwmat[i, j], (privec[i]/privec[j])) - 1
-    where ratio_greater_1(a,b) is 1 if a or b is 0 and is max(a/b, b/a) otherwise.
+
+    .. math::
+        ratio\_greater\_1(pwmat[i, j], (privec[i]/privec[j])) - 1
+
+    where
+
+    .. math::
+        ratio\_greater\_1(a,b) = \\begin{cases}
+            1 & \\hbox{ if  a or b = 0 } \\\\
+            max(a/b, b/a) & \\hbox{otherwise}
+        \\end{cases}.
 
     :param pwmat: A numpy.array of shape [size, size] of pairwise comparisons
     :param privec: A numpy.array of shape [size] of priortiy vector

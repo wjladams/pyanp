@@ -10,10 +10,8 @@ Python ANP/AHP Library
    :maxdepth: 2
    :caption: Contents:
 
-Documentation
-============
+   refs/index
 
-* :doc:`refs/index`
 
 Indices and tables
 ==================
