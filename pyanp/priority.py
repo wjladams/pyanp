@@ -291,7 +291,9 @@ def ratio_greater_1(a, b):
     The ratio of a to b (or b to a) that is larger than or equal to 1.
 
     :param a: A numerical value for the ratio calculation
+
     :param b: Another numerical value
+
     :return: 1 if a or b is 0, otherwise max(a/b, b/a)
     '''
     if (a == 0) or (b == 0):
@@ -301,10 +303,16 @@ def ratio_greater_1(a, b):
 
 def prerr_ratio_prod(pwmat, privec):
     '''
-    Calculates priority error using the geometric average of ratios of pwmat and the ratio matrix of privec
+    Calculates priority error using the geometric average of ratios of pwmat
+    and the ratio matrix of privec, the formula is:
+
+    .. math::
+        \\sqrt[n(n-1)/2]{\\prod_{i=1, j=i+1} ratio\_greater\_1(pwmat[i, j], privec[i]/privec[j])}
 
     :param pwmat: A numpy.array of shape [size, size] of pairwise comparisons
+
     :param privec: A numpy.array of shape [size] of priortiy vector
+
     :return: The calculated error
     '''
     diffprod = 1
@@ -327,11 +335,12 @@ def prerr_ratio_prod(pwmat, privec):
 ### Creating a pairwise matrix from simpler data #####
 ######################################################
 
-def ratio_mat(pv):
+def ratio_mat(pv)->np.ndarray:
     '''
     Returns the ratio matrix of a vector
 
     :param pv: An array-like object with len(pv)=size
+
     :return: A numpy.array of shape [size, size] of the ratios
     '''
     size = len(pv)
@@ -342,12 +351,13 @@ def ratio_mat(pv):
                 rval[row, col] = pv[row] / pv[col]
     return rval
 
-def utmrowlist_to_npmatrix(list_of_votes):
+def utmrowlist_to_npmatrix(list_of_votes)->np.ndarray:
     '''
     Convert a list of values to a pairwise matrix, assuming the list is the upper triangular part only
 
     :param list_of_votes: An array like, the first elements are the top row of the UTM part of the matrix.
         Then it goes to the second row, etc.
+
     :return: A numpy.array of the full pairwise comparison matrix.
     '''
     N = len(list_of_votes)
@@ -375,11 +385,13 @@ def utmrowlist_to_npmatrix(list_of_votes):
 def size_array_like(mat_or_size):
     '''
     Returns the size of an array like or integer
+
     :param mat_or_size: Either an integer (specifying the size) or an array-like or numpy.array of shape [size, size].
         If array-like list of lists, we only use len(mat_or_size), we do not check that the array-like is actually
         square.
+
     :return: The parameter if it was an integer, len(mat_or_size) if param is a list, or mat_or_size.shape[0] if
-        mat_or_size is a numpy.array
+        mat_or_size is a numpy.ndarray
     '''
     if isinstance(mat_or_size, (int)):
         return mat_or_size
