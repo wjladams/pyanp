@@ -3,17 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pyanp's documentation!
-=================================
+Python ANP/AHP Library
+======================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-Pyanp pydocs
+Documentation
 ============
 
-* :doc:`ahptree`
+* :doc:`refs/index`
 
 Indices and tables
 ==================

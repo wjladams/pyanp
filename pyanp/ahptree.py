@@ -257,7 +257,7 @@ class AHPTree(Prioritizer):
         Creates a new AHPTree object
 
         :param root_name: The name of the root node of the tree, defaults to Goal.
-        
+
         :param alt_names: The alts to start this tree with.
         '''
         if alt_names is None:

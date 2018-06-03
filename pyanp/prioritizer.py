@@ -8,11 +8,26 @@ import numpy as np
 import pandas
 
 class PriorityType(Enum):
+    '''
+    An enumeration telling how to normalize priorities for a calculation
+    '''
     RAW = auto()
+    """Leave the priorities unchanged."""
     NORMALIZE = auto()
+    """Divide priorities by sum, so that they sum to 1."""
     IDEALIZE = auto()
+    """Divide priorities by max, so that the largest is 1."""
 
     def apply(self, vals):
+        '''
+        Returns a copy of the parameter vals that has been adjusted as this
+        PriorityType would.
+
+        :param vals: A list-like object of values.  We return a copy that is adjusted.
+
+        :return:  A list-like of the same type as 'vals' that has been normalized as
+        this PriorityType would do.
+        '''
         rval = copy_array_as_float(vals)
         if self == PriorityType.RAW:
             return rval
