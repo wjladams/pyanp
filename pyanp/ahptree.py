@@ -283,14 +283,20 @@ class AHPTree(Prioritizer):
     def nodepw(self, username:str, wrt:str, row:str, col:str, val, createUnknownUser=True)->None:
         '''
         Pairwise compares a nodes for a given user.
+
         :param username: The name of the user to do the comparison for.  If the user doesn't exist, this will create
         the user if createUnknownUser is True, otherwise it will raise an exception
+
         :param wrt: The name of the wrt node.
+
         :param row: The name of the row node for the comparison, i.e. the dominant node.
+
         :param col: The name of the column node for the comparison, i.e. the recessive node.
+
         :param val: The vote value
-        :return:
-        Nothing
+
+        :return: Nothing
+
         :raises ValueError: If wrt, row, or col node did not exist.  Also if username did not exist and
         createUnknownUsers is False.
         '''
