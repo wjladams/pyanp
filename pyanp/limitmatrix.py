@@ -10,7 +10,7 @@ from copy import deepcopy
 def _mat_pow2(mat, power):
     '''
     Calculates mat ** N where N >= power and N is a power of 2.  It does this by squaring mat, and
-    squaring that, etc, until it reaches the desired level.  It takes at most log_2(power)+1 matrix
+    squaring that, etc, until it reaches the desired level.  It takes at most floor(log_2(power))+1 matrix
     multiplications to do this, which is much preferred for large powers.
     :param mat: The numpy array to raise to a power.
     :param power: The power to be greater than or equal to

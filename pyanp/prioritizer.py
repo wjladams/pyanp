@@ -1,5 +1,5 @@
 '''
-A prioritizer is the root class of all
+A prioritizer is the root class of all things that prioritize objects (e.g. Pairwise and AHPTree).
 '''
 
 from enum import Enum, auto

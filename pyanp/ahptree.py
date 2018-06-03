@@ -18,8 +18,11 @@ class AHPTreeNode:
     def __init__(self, parent, name:str, alt_names):
         '''
         Initial a new AHPTreeNode
+
         :param parent: The parent AHPTree this AHPTreeNode is in.
+
         :param name: The string name of this node.  It should be unique in its parent tree.
+
         :param alt_names: The alternatives we are comparing in the AHPTree.  As currently implemented
         the parent tree has the list of alternatives and we pass that object to the nodes.  This allows us
         to add new alternatives once in the parent tree and the addition cascades down.
@@ -34,11 +37,13 @@ class AHPTreeNode:
         self.alt_scores_manually_set=False
         self.name = name
 
-    def has_child(self, name)->bool:
+    def has_child(self, name:str)->bool:
         '''
         Returns a boolean telling if this node has a child with the given name.
-        :param name:
-        :return:
+
+        :param name: The name of the child to check for.
+
+        :return: True/False if the node has the child by the given name or not.
         '''
         return name in [kid.name for kid in self.children]
 
@@ -100,7 +105,9 @@ class AHPTreeNode:
         result in the alt_scores.  However if the node has no children and has had
         it's alternative scores manually set via AHPTreeNode.set_alt_scores, then this
         does nothing.  Otherwise it synthesizes upward.
+
         :param username: The name of the user (or list of names of the users) to synthesize for.
+
         :return:
         Nothing
         '''
@@ -248,7 +255,9 @@ class AHPTree(Prioritizer):
     def __init__(self, root_name="Goal", alt_names = None):
         '''
         Creates a new AHPTree object
+
         :param root_name: The name of the root node of the tree, defaults to Goal.
+        
         :param alt_names: The alts to start this tree with.
         '''
         if alt_names is None:
@@ -356,8 +365,10 @@ class AHPTree(Prioritizer):
     def synthesize(self, username=None)->None:
         '''
         Does ahp tree synthesis to calculate the alternative scores wrt to all nodes in the tree.
-        :param username: The name/names of the user/users to syntheesize wrt.  If None, that means do the full
+
+        :param username: The name/names of the user/users to synthesize wrt.  If None, that means do the full \
         group average.
+
         :return:
         Nothing
         '''
