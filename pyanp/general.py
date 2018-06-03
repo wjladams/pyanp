@@ -4,12 +4,16 @@ Generally useful math and other functions.
 
 def linear_interpolate(xs, ys, x):
     '''
+    Piecewise linear interpolation between a bunch of x and y coordinates.
 
     :param xs: Increasing x values (no dupes)
+
     :param ys: The y values
+
     :param x: The x value to linearly interpolate at
+
     :return: if x < xs[0], returns ys[0], if x > xs[-1], returns ys[-1]
-    else linearly interpolates.
+        else linearly interpolates.
     '''
     if x <= xs[0]:
         return ys[0]
@@ -27,8 +31,10 @@ def linear_interpolate(xs, ys, x):
 def islist(val):
     '''
     Simple function to check if a value is list like object
-    :param val:
-    :return:
+
+    :param val: The object to check its listiness.
+
+    :return: Boolean True/False
     '''
     if val is None:
         return False

@@ -14,7 +14,9 @@ SUPERMATRIX_EXS = pd.DataFrame(columns=["description", "keywords", "matrix", "si
 def _clean_keywords(keywords):
     '''
     Cleans keywords for example matrices, to make sure they are easily searched
+
     :param keywords: The keywords sent to '_add_pairwise' or '_add_supermatrix'
+
     :return: A cleansed version, stripped and to lowercase, among other things.
     '''
     if keywords is None:
@@ -31,11 +33,17 @@ def _clean_keywords(keywords):
 def _add_pairwise(name, description, keywords, mat, author=''):
     '''
     Adds a new pariwise example
+
     :param name: The unique id of this pairwise matrix example.
+
     :param description: A stringy description of the example
+
     :param keywords: A list of stringy keywords
+
     :param mat: The numpy matrix
+
     :param author: Optional author email
+
     :return:
     '''
     global PAIRWISE_EXS
@@ -48,11 +56,17 @@ def _add_pairwise(name, description, keywords, mat, author=''):
 def _add_supermatrix(name, description, keywords, mat, author=''):
     '''
     Adds a new supermatrix example
+
     :param name: Unique string id of the example
+
     :param description: A string description
+
     :param keywords: A list of string keywords
+
     :param mat: The numpy matrix
+
     :param author: Optional string email of the contributor/author
+
     :return:
     '''
     global SUPERMATRIX_EXS
@@ -63,16 +77,26 @@ def _add_supermatrix(name, description, keywords, mat, author=''):
     SUPERMATRIX_EXS.loc[name]=[description, keywords,  mat, size, author]
 
 
-def matrix_matching(df=SUPERMATRIX_EXS, description=None, keywords=None, size=None, author=None):
+def matrix_matching(df=None, description=None, keywords=None, size=None, author=None):
     '''
     Finds matrices that match search criteria
+
     :param df: The dataframe to search through, either SUPERMATRIX_EXS or PAIRWISE_EXS
+        if None we use SUPERMATRIX_EXS
+
     :param description: A substring to search through description
+
     :param keywords: A list of keywords to find
+
     :param size: The size
+
     :param author: The contributing author, a substring search
+
     :return: List of indices of the matches in the given dataframe
     '''
+    if df is None:
+        global SUPERMATRIX_EXS
+        df = SUPERMATRIX_EXS
     indices = list(df.index)
     if description is not None:
         description = description.lower()
@@ -97,13 +121,19 @@ def matrix_matching(df=SUPERMATRIX_EXS, description=None, keywords=None, size=No
 def supermatrix_ex(name=None, description=None, keywords=None, size=None, author=None):
     '''
     Find the supermatrix example that matches the conditions
+
     :param name: If not None, we find the single matrix with this name/id
+
     :param description: Substring search in description
+
     :param keywords: exact match keywords
+
     :param size: exact match size
+
     :param author: substring search author
+
     :return: A single numpy.array item if only one matches the constraint, or a panda.Series
-    indexed by name or the resulting numpy.array s.
+        indexed by name or the resulting numpy.array s.
     '''
     global SUPERMATRIX_EXS
     if name is not None:
@@ -115,13 +145,19 @@ def supermatrix_ex(name=None, description=None, keywords=None, size=None, author
 def pairwisematrix_ex(name=None, description=None, keywords=None, size=None, author=None):
     '''
     Find the pairwise matrix example that matches the conditions
+
     :param name: If not None, we find the single matrix with this name/id
+
     :param description: Substring search in description
+
     :param keywords: exact match keywords
+
     :param size: exact match size
+
     :param author: substring search author
+
     :return: A single numpy.array item if only one matches the constraint, or a panda.Series
-    indexed by name or the resulting numpy.array s.
+        indexed by name or the resulting numpy.array s.
     '''
     global PAIRWISE_EXS
     if name is not None:

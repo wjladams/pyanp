@@ -9,11 +9,15 @@ from copy import deepcopy
 
 def _mat_pow2(mat, power):
     '''
-    Calculates mat ** N where N >= power and N is a power of 2.  It does this by squaring mat, and
-    squaring that, etc, until it reaches the desired level.  It takes at most floor(log_2(power))+1 matrix
+    Calculates :math:`mat^N` where :math:`N \geq power` and N is a power of 2.
+    It does this by squaring mat, and squaring that, etc, until it reaches
+    the desired level.  It takes at most floor(log_2(power))+1 matrix
     multiplications to do this, which is much preferred for large powers.
+
     :param mat: The numpy array to raise to a power.
+
     :param power: The power to be greater than or equal to
+
     :return: The resulting power of the matrix
     '''
     last = deepcopy(mat)
@@ -31,11 +35,14 @@ def normalize(mat, inplace=False):
     '''
     Makes the columns of a matrix add to 1 (unless the column summed to zero, in which case it is left unchanged)
     Does this by dividing each column by the sum of that column.
+
     :param mat: The matrix to normalize
+
     :param inplace: If true normalizes the matrix sent in, otherwise it leaves that matrix alone, and returns a
-    normalized copy
+        normalized copy
+
     :return: If inplace=False, it returns the normalized matrix, leaving the param mat unchanged.  Otherwise it
-    returns nothing and normalizes the param mat.
+        returns nothing and normalizes the param mat.
     '''
     div = mat.sum(axis=0)
     for i in range(len(div)):
@@ -59,8 +66,11 @@ def hiearhcy_formula(mat):
     '''
     Uses the hierarchy formula to calculate the limit matrix.  This is essentially the normalization of
     the sum of higher powers of mat.
+
     :param mat: A square nump.array that you wish to find the limit matrix of, using the hiearchy formula.
-    :return: The limit matrix, unless the matrix was not a hiearchy.  If the matrix was not a hierarchy we return None
+
+    :return: The limit matrix, unless the matrix was not a hiearchy.  If the matrix was not a
+        hierarchy we return None
     '''
     size = len(mat)
     big = _mat_pow2(mat, size+1)
@@ -82,13 +92,19 @@ def hiearhcy_formula(mat):
 def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_scale_type=None):
     '''
     Calculates the 'Calculus Type' limit matrix from superdecisions
+
     :param mat: The scaled supermatrix to calculate the limit matrix of
+
     :param error: The maximum error to allow between iterations
+
     :param max_iters: The maximum number of iterations before we give up, after we calculate the start power
+
     :param use_hierarchy_formula: If True and the matrix is for a hierarchy we use that formula instead.
+
     :param col_scale_type: A string if 'all' it scales mat1 by max(mat1) and similarly for mat2
-    otherwise, it scales by column
-    :return:
+        otherwise, it scales by column
+
+    :return: The calculats limit matrix as a numpy array.
     '''
     size = len(mat)
     diff = 0.0
@@ -141,13 +157,20 @@ def normalize_cols_dist(mat1, mat2, tmp1=None, tmp2=None, tmp3=None, col_scale_t
 
     If you do not wish to avail yourself of this savings, simply leave them as None's
     and the algorithm will allocate as appropriate
-    :param mat1:
-    :param mat2:
+
+    :param mat1: First matrix to compare
+
+    :param mat2: The other matrix to compare
+
     :param tmp1: A temporary storage matrix of same size as mat1 and mat2.  If None, it will be allocated inside the fx.
+
     :param tmp2: A temporary storage matrix of same size as mat1 and mat2.  If None, it will be allocated inside the fx.
+
     :param tmp3: A temporary storage matrix of same size as mat1 and mat2.  If None, it will be allocated inside the fx.
+
     :param col_scale_type: A string if 'all' it scales mat1 by max(mat1) and similarly for mat2
-    otherwise, it scales by column
+        otherwise, it scales by column
+
     :return: The maximum difference between the column normalized versions of mat1 and mat2
     '''
     tmp1 = tmp1 if tmp1 is not None else deepcopy(mat1)
@@ -176,9 +199,12 @@ def zero_cols(full_mat, non_zero=False):
     '''
     Returns the list of indices of columns that are zero or non_zero
     depending on the parameter non_zero
+
     :param mat: The matrix to search over
+
     :param non_zero: If False, returns the indices of columns that are zero, otherwise
-    returns indices of columns that a not zero.
+        returns indices of columns that a not zero.
+
     :return: A list of indices of columns of the type determined by the parameter non_zero.
     '''
     size = len(full_mat)
@@ -202,7 +228,9 @@ def zero_cols(full_mat, non_zero=False):
 def hierarchy_nodes(mat):
     '''
     Returns the indices of the nodes that are hierarchy ones.  The others are not hierachy
+
     :param mat: A supermatrix (scaled or non-scaled, both work).
+
     :return: List of indices that are the nodes which are hierarhical.
     '''
     size = len(mat)
@@ -217,10 +245,16 @@ def two_two_breakdown(mat, upper_right_indices):
     limit matrix calculations that split the problem up into the hierarchical and
     network components and do separate calculations and then bring them together.
     :param mat: The matrix to split into
-    A | B
-    C | D
+
+    == ==
+    A   B
+    C   D
+    == ==
+
     form, where A is the "upper_right_indcies" and D is the opposite
-    :param upper_righ_indices: List of indices of the upper right positions.
+
+    :param upper_right_indices: List of indices of the upper right positions.
+
     :return: A list of [A, B, C, D] of those matrices
     '''
     total_n = len(mat)
@@ -253,10 +287,12 @@ def limit_sinks(mat, straight_normalizer=True):
     '''
     Performs the limit with sinks calculation.  We break up the matrix
     into sinks and nonsinks, and use those pieces.
-    :param mat:
+
+    :param mat: The matrix to do the limit sinks calculation on.
+
     :param straight_normalizer: If False we normalize at each step, if True
-    we normalize at the end.
-    :return:
+        we normalize at the end.
+    :return: The resulting numpy array result.
     '''
     n = len(mat)
     nonsinks = zero_cols(mat, non_zero=True)
@@ -290,9 +326,12 @@ def limit_sinks(mat, straight_normalizer=True):
 def limit_newhierarchy(mat, with_limit=False, error=1e-10, col_scale_type = None, max_count = 1000):
     '''
     Performs the new hiearchy limit matrix calculation
-    :param mat:
-    :param with_limit:
-    :return:
+
+    :param mat: The matrix to perform the calculation on.
+
+    :param with_limit: Do we include the final limit step?
+
+    :return: The resulting numpy array
     '''
     n = len(mat)
     hier_nodes = hierarchy_nodes(mat)
@@ -340,8 +379,10 @@ def priority_from_limit(limit_matrix):
     '''
     Calculates the priority from a limit matrix, i.e. sums columns and divides by the number of
     columns.
-    :param limit_matrix:
-    :return:
+
+    :param limit_matrix: The matrix to extract the priority from
+
+    :return: 1d numpy array of the priority
     '''
     rval = limit_matrix.sum(axis=1)
     n = len(rval)
