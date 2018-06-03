@@ -2,7 +2,7 @@
 A prioritizer is the root class of all things that prioritize objects (e.g. Pairwise and AHPTree).
 '''
 
-from enum import Enum, auto
+from enum import Enum
 from copy import deepcopy
 import numpy as np
 import pandas
@@ -11,11 +11,11 @@ class PriorityType(Enum):
     '''
     An enumeration telling how to normalize priorities for a calculation
     '''
-    RAW = auto()
+    RAW = 1
     """Leave the priorities unchanged."""
-    NORMALIZE = auto()
+    NORMALIZE = 2
     """Divide priorities by sum, so that they sum to 1."""
-    IDEALIZE = auto()
+    IDEALIZE = 3
     """Divide priorities by max, so that the largest is 1."""
 
     def apply(self, vals):
