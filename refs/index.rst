@@ -8,5 +8,3 @@ Programmers Reference PyANP
 * :doc:`general`
 * :doc:`direct`
 * :doc:`prioritizer`
-* Can I do more
-* I do not think so
