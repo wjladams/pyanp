@@ -268,11 +268,12 @@ class AHPTree(Prioritizer):
     def add_alt(self, alt_name:str)->None:
         '''
         Adds an alternative to this tree and all of the nodes in the tree.
+
         :param alt_name: The name of the new alternative to add.
-        :return:
-        Nothing
-        :raises ValueError:
-        If an alternative already existed with the given name
+
+        :return: Nothing
+
+        :raises ValueError: If an alternative already existed with the given name
         '''
         if alt_name in self.alt_names:
             raise ValueError("Cannot add duplicate alternative name "+alt_name)
