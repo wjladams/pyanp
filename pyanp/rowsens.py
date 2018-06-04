@@ -1,5 +1,5 @@
 '''
-ANP row sensitivity calculations
+All ANP row sensitivity calculations are in this module.
 '''
 
 import pandas as pd
@@ -16,11 +16,17 @@ def _p_to_scalar(mat, p, p0=0.5):
     '''
     Simple internal function that turns a p parameter for anp row sensitivity
     into the scalar value to multiply the row by.
-    :param mat: The matrix that this p will be applied to.  As of this writing, it is not used in the calculation.
+
+    :param mat: The matrix that this p will be applied to.  As of this writing,
+        it is not used in the calculation.
+
     :param p: The p-value to convert.  Should be a number between 0 and 1.
+
     :param p0: The fixed value, should be a number between 0 and 1 EXCLUSIVE
-    :return: A list of two items.  The first is a boolean telling whether we scaled Up (True) or Down (False) and the
-    second item is the scalar to multiply the row by.
+
+    :return: A list of two items.  The first is a boolean telling whether
+        we scaled Up (True) or Down (False) and the second item is the scalar
+        to multiply the row by.
     '''
     if p < p0:
         return (False, p/p0)
@@ -32,17 +38,24 @@ def _p_to_scalar(mat, p, p0=0.5):
 def calcp0(mat, row, cluster_nodes, orig, p0mode):
     '''
     Calculates the p0, or resting, value for the row sensitivity
+
     :param mat: The matrix to do row sensitivity on
+
     :param row: The row to do row sensitivity on
-    :param cluster_nodes: The indices of the other nodes in the cluster that `row` is in.  Used for
-    `inluence_marginal()` if p0mode is an integer meaning smart mode for alt=p0mode
-    :param orig: The original weight, used if p0mode is not an integer (meaning smart) or a float (meaning a direct
-    p0 value)
+
+    :param cluster_nodes: The indices of the other nodes in the cluster that
+        `row` is in.  Used for `inluence_marginal()` if p0mode is an integer
+        meaning smart mode for alt=p0mode :param orig: The original weight,
+        used if p0mode is not an integer (meaning smart) or a float
+        (meaning a direct p0 value).
+
     :param p0mode:  This controls the calculation and has 3 cases:
-    * if it is a float, you are directly setting the p0 value to whatever p0mode is
-    * if it is an integer, this is the smart p0 mode, and it treats p0mode as the index of the alternative/node to make
-    continuous.
-    * otherwise we assume you want original weights to be the p0 value, and return the parameter `orig`
+        Case 1: if it is a float, you are directly setting the p0 value to whatever p0mode is.
+        Case 2: if it is an integer, this is the smart p0 mode, and it treats p0mode as
+        the index of the alternative/node to make continuous.
+        Case 3: otherwise we assume you want original weights to be the p0 value, and
+        return the parameter `orig`
+
     :return: The p0 or resting value, see the `p0mode` parameter for more information
     '''
     if isinstance(p0mode, float):
@@ -67,14 +80,23 @@ def row_adjust(mat, row, p, cluster_nodes=None, inplace=False, p0mode=None):
     '''
     Performs an actual row adjust on the matrix, either inplace or returns an adjusted copy, leaving the
     original unchanged.
+
     :param mat: The scaled supermatrix to perform anp row sensitivity on.
+
     :param row: The row index to perform the anp row sensitivity on
+
     :param p: The p value to adjust to
+
     :param cluster_nodes: The other nodes in the parameter row's cluster (including row itself),
-    so we can scale by cluster.  If None we do not scale by cluster.
-    :param inplace: Should we change the matrix mat, or should we create a new one, adjust it, and return it?
+        so we can scale by cluster.  If None we do not scale by cluster.
+
+    :param inplace: Should we change the matrix mat, or should we create a new
+        one, adjust it, and return it?
+
     :param p0mode:  See calcp0() function
-    :return: The adjusted matrix if inplace=False, and otherwise returns nothing and changes the matrix mat.
+
+    :return: The adjusted matrix if inplace=False, and otherwise returns nothing
+        and changes the matrix mat.
     '''
     n = len(mat)
     if not inplace:
@@ -113,10 +135,12 @@ def row_adjust(mat, row, p, cluster_nodes=None, inplace=False, p0mode=None):
 
 
 
-def p0mode_name(p0mode_value):
+def p0mode_name(p0mode_value)->str:
     '''
     Tells what kind of p0 the p0mode value is
-    :param p0mode_value:
+
+    :param p0mode_value: The p0mode value to get a name of
+
     :return: A string/human readable bit of information about the p0mode.
     '''
     if isinstance(p0mode_value, int):
@@ -128,11 +152,13 @@ def p0mode_name(p0mode_value):
     else:
         return 'original weight'
 
-def p0mode_is_smart(p0mode_value):
+def p0mode_is_smart(p0mode_value)->bool:
     '''
     Is the p0mode value a "smart value".  See calcp0 for more info on p0mode values.
-    :param p0mode_value:  If it is an int, this p0mode value represents doing smart p0 making the node of that index
-    (i.e.p0mode's value) smooth
+
+    :param p0mode_value:  If it is an int, this p0mode value represents doing
+        smart p0 making the node of that index (i.e.p0mode's value) smooth
+
     :return: True | False
     '''
     return isinstance(p0mode_value, int)
@@ -140,7 +166,10 @@ def p0mode_is_smart(p0mode_value):
 def p0mode_is_direct(p0mode_value):
     '''
     Is the p0mode value a "directly set value".  See calcp0 for more info on p0mode values.
-    :param p0mode_value:  If it is an float, this p0mode value is the direct value to use for p0.
+
+    :param p0mode_value:  If it is an float, this p0mode value is the direct
+        value to use for p0.
+
     :return: True | False
     '''
     return isinstance(p0mode_value, float)
@@ -149,24 +178,34 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
                        p0mode=0.5, limit_matrix_calc=calculus):
     '''
     Calculates the marginal influence
+
     :param mat: The scaled supermatrix to calculate marginal influence on
+
     :param row: The index of the row to perform the marginal influence on
+
     :param influence_nodes: The nodes to calculate the marginal influence of the row upon, if None then it assumes
-    all nodes except row.
+        all nodes except row.
+
     :param cluster_nodes: The other nodes in the parameter row's cluster (including row itself),
-    so we can scale by cluster.  If None we do not scale by cluster.
+        so we can scale by cluster.  If None we do not scale by cluster.
+
     :param left_or_right: An integer telling whether we should do left-hand side derivative, right-hand side
-    derivative or average them.  If left_or_right < 0, then we do LHS deriv.  If left_or_right > 0, we do RHS deriv.
-    Finally, if left_or_right == 0, we average LHS and RHS.
+        derivative or average them.  If left_or_right < 0, then we do LHS deriv.  If left_or_right > 0, we do RHS deriv.
+        Finally, if left_or_right == 0, we average LHS and RHS.
+
     :param delta: The delta_x to use for the derivative calculation.
-    :param p0mode: Determines how p0 is calculated and has 3 cases:
-    * if it is a float, you are directly setting the p0 value to whatever p0mode is
-    * if it is an integer, this is the smart p0 mode, and it treats p0mode as the index of the alternative/node to make
-    continuous.
-    * otherwise we assume you want original weights to be the p0 value, and return the parameter `orig`
+
+    :param p0mode:  This controls the calculation and has 3 cases:
+        Case 1: if it is a float, you are directly setting the p0 value to whatever p0mode is.
+        Case 2: if it is an integer, this is the smart p0 mode, and it treats p0mode as
+        the index of the alternative/node to make continuous.
+        Case 3: otherwise we assume you want original weights to be the p0 value, and
+        return the parameter `orig`
+
     :param limit_matrix_calc: A function which takes a single input, the matrix to take the limit of.
+
     :return: A pandas.Series whose indices are influence_nodes and whose values are the marginal influence
-    scores of those nodes with respect to the given row.
+        scores of those nodes with respect to the given row.
     '''
     n = len(mat)
     if influence_nodes is None:
@@ -208,28 +247,37 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
     '''
     Calculates the direct influence score, i.e. it calculates anp row sensitivity for each of pvals values and
     stores the new scores of the influence_nodes.
+
     :param mat: The scaled supermatrix to perform the calculation on
+
     :param row: The row to use for anp row sensitivity
+
     :param pvals: The values to set p to, this should be a list (or list like) object of values before 0 and 1.
+
     :param cluster_nodes: If you wish to normalize by cluster, this should be the indices of the nodes that are
-    in row's cluster (including row itself).
+        in row's cluster (including row itself).
+
     :param influence_nodes: The indices of the nodes to calculate the influence of, with respect to row. If None
-    it calculates the influence of all nodes other than row.
-    :param p0mode: Determines how p0 is calculated and has 3 cases:
-    * if it is a float, you are directly setting the p0 value to whatever p0mode is
-    * if it is an integer, this is the smart p0 mode, and it treats p0mode as the index of the alternative/node to make
-    continuous.
-    * otherwise we assume you want original weights to be the p0 value, and return the parameter `orig`
-    :param limit_matrix_calc:
+        it calculates the influence of all nodes other than row.
+
+    :param p0mode:  This controls the calculation and has 3 cases:
+        Case 1: if it is a float, you are directly setting the p0 value to whatever p0mode is.
+        Case 2: if it is an integer, this is the smart p0 mode, and it treats p0mode as
+        the index of the alternative/node to make continuous.
+        Case 3: otherwise we assume you want original weights to be the p0 value, and
+        return the parameter `orig`
+
     :param limit_matrix_calc: A function which takes a single input, the matrix to take the limit of.
+
     :param graph: If True, we return a matplotlib graph, otherwise we return pandas.DataFrame, p0vals
+
     :return: If graph=True, we return nothing, but create a matplotlib object and call plt.show().  Otherwise
-    we return a pair of items.  The first is the dataframe of results, whose indices are "Node 1", "Node 2", ...
-    which corresponds to influence_nodes (and the indices after "Node " are the influence_node indices)
-    and has 2 columns, 'x' is the pvals and 'y' is the resulting influence
-    score (i.e. changed priority).  The second element is a pd.Series whose indices is the same as the dataframe
-    and whose values are pairs of items (x,y) where x is the p0 value for the given alternative and the y is the
-    influence score of that alternative at that p-value.
+        we return a pair of items.  The first is the dataframe of results, whose indices are "Node 1", "Node 2", ...
+        which corresponds to influence_nodes (and the indices after "Node " are the influence_node indices)
+        and has 2 columns, 'x' is the pvals and 'y' is the resulting influence
+        score (i.e. changed priority).  The second element is a pd.Series whose indices is the same as the dataframe
+        and whose values are pairs of items (x,y) where x is the p0 value for the given alternative and the y is the
+        influence score of that alternative at that p-value.
     '''
     if pvals is None:
         xs = [i / 50 for i in range(1, 50)]
@@ -288,23 +336,31 @@ def influence_table_plot(df, p0s):
 def influence_limit(mat, row, cluster_nodes=None, influence_nodes=None, delta=1e-6, p0mode=0.5, limit_matrix_calc=calculus):
     '''
     Calculates the limit influence score of the influence_nodes with respect to row.
+
     :param mat: The scaled supermatrix to perform the calculation on
+
     :param row: The row to use for anp row sensitivity
+
     :param cluster_nodes: If you wish to normalize by cluster, this should be the indices of the nodes that are
-    in row's cluster (including row itself).
+        in row's cluster (including row itself).
     :param influence_nodes: The indices of the nodes to calculate the influence of, with respect to row. If None
-    it calculates the influence of all nodes other than row.
+        it calculates the influence of all nodes other than row.
+
     :param delta: We use 1-delta for the p-value to plugin to approximate the limit as p -> 1
-    :param p0mode: Determines how p0 is calculated and has 3 cases:
-    * if it is a float, you are directly setting the p0 value to whatever p0mode is
-    * if it is an integer, this is the smart p0 mode, and it treats p0mode as the index of the alternative/node to make
-    continuous.
-    * otherwise we assume you want original weights to be the p0 value, and return the parameter `orig`
+
+    :param p0mode:  This controls the calculation and has 3 cases:
+        Case 1: if it is a float, you are directly setting the p0 value to whatever p0mode is.
+        Case 2: if it is an integer, this is the smart p0 mode, and it treats p0mode as
+        the index of the alternative/node to make continuous.
+        Case 3: otherwise we assume you want original weights to be the p0 value, and
+        return the parameter `orig`
+
     :param limit_matrix_calc: A function which takes a single input, the matrix to take the limit of.
+
     :return: A tuple of 2 items, the first is a pandas.Series whose indices are 'Node 1', 'Node 2'
-     (and the indices after "Node " are the influence_node indices)
-    and whose values are the limit value.  The second element of the returned tuple is a pandas.Series
-    with the same indices and whose values are the p0 values we used for that alternative.
+        (and the indices after "Node " are the influence_node indices)
+        and whose values are the limit value.  The second element of the returned tuple is a pandas.Series
+        with the same indices and whose values are the p0 values we used for that alternative.
     '''
     if not p0mode_is_direct(p0mode):
         raise ValueError("p0mode must be a direct p0 value for limit influence")
@@ -337,19 +393,26 @@ def row_adjust_priority(mat, row, p, cluster_nodes=None, p0mode=None, limit_matr
                         normalize_to_orig=False):
     '''
     Adjusts a row of matrix and recalculates the priorities of all the nodes.
+
     :param mat: The scaled supermatrix to perform the calculation on
+
     :param row: The row to use for anp row sensitivity
+
     :param cluster_nodes: If you wish to normalize by cluster, this should be the indices of the nodes that are
-    in row's cluster (including row itself).
-    :param p0mode: Determines how p0 is calculated and has 3 cases:
-    * if it is a float, you are directly setting the p0 value to whatever p0mode is
-    * if it is an integer, this is the smart p0 mode, and it treats p0mode as the index of the alternative/node to make
-    continuous.
-    * otherwise we assume you want original weights to be the p0 value, and return the parameter `orig`
+        in row's cluster (including row itself).
+
+    :param p0mode:  This controls the calculation and has 3 cases:
+        Case 1: if it is a float, you are directly setting the p0 value to whatever p0mode is.
+        Case 2: if it is an integer, this is the smart p0 mode, and it treats p0mode as
+        the index of the alternative/node to make continuous.
+        Case 3: otherwise we assume you want original weights to be the p0 value, and
+        return the parameter `orig`
+
     :param limit_matrix_calc: A function which takes a single input, the matrix to take the limit of.
+
     :param normalize_to_orig: If True we normalize the returning priority score so that the [row] index of it has
-    the same value as the original and the other values are rescaled.  Otherwise we simply normalize the priority
-    vector directly.
+        the same value as the original and the other values are rescaled.  Otherwise we simply normalize the priority
+        vector directly.
     '''
     if normalize_to_orig:
         old_lmt = limit_matrix_calc(mat)
@@ -371,21 +434,30 @@ def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.
                     limit_matrix_calc=calculus):
     '''
     Calculates fixed influence, i.e. we do row sensitivity and calculate the difference
+
     :param mat: The scaled supermatrix to perform the calculation on
+
     :param row: The row to use for anp row sensitivity
+
     :param cluster_nodes: If you wish to normalize by cluster, this should be the indices of the nodes that are
-    in row's cluster (including row itself).
+        in row's cluster (including row itself).
+
     :param influence_nodes: The indices of the nodes to calculate the influence of, with respect to row. If None
-    it calculates the influence of all nodes other than row.
+        it calculates the influence of all nodes other than row.
+
     :param delta: How much to change from p0 for the fixed influence
-    :param p0mode: Determines how p0 is calculated and has 3 cases:  NOTE: ONLY DIRECT MODE ALLOWED
-    * if it is a float, you are directly setting the p0 value to whatever p0mode is
-    * if it is an integer, this is the smart p0 mode, and it treats p0mode as the index of the alternative/node to make
-    continuous.
-    * otherwise we assume you want original weights to be the p0 value, and return the parameter `orig`
+
+    :param p0mode:  This controls the calculation and has 3 cases:
+        Case 1: if it is a float, you are directly setting the p0 value to whatever p0mode is.
+        Case 2: if it is an integer, this is the smart p0 mode, and it treats p0mode as
+        the index of the alternative/node to make continuous.
+        Case 3: otherwise we assume you want original weights to be the p0 value, and
+        return the parameter `orig`
+
     :param limit_matrix_calc:
+
     :return: A pandas.Series whose index is influence_nodes and whose values are the influence scores of those nodes
-    with respect to the row.
+        with respect to the row.
     '''
     if not p0mode_is_direct(p0mode):
         raise ValueError("p0mode must be a direct p0 value for fixed distance influence")
@@ -403,12 +475,18 @@ def rank_change(vec1, vec2, places_to_rank, rank_change_places=None, round_to_de
     '''
     A calculation that rounds 2 vectors to round_to_decimal places and then looks to see if
     the ranking of rounded vec1 is different from rounded vec2.
+
     :param vec1: A list or list-like object to check rank changing
+
     :param vec2: Another list or list-like object to check rank changing
+
     :param places_to_rank: Indices to rank.
+
     :param rank_change_places: Of the indices we are ranking, which ones are we checking for a change (if None we
-    check all indices for rank change).
+        check all indices for rank change).
+
     :param round_to_decimal: The number of decimal places to round to, before checking for rank changes
+
     :return: True if a rank change happen and False otherwise
     '''
     if (rank_change_places is None):
@@ -435,37 +513,51 @@ def influence_rank(mat, row, cluster_nodes=None, influence_nodes=None,
     Calculates rank influence scores.
 
     :param mat: The scaled supermatrix to perform the calculation on
+
     :param row: The row to use for anp row sensitivity
+
     :param cluster_nodes: If you wish to normalize by cluster, this should be the indices of the nodes that are
-    in row's cluster (including row itself).
+        in row's cluster (including row itself).
+
     :param influence_nodes: The indices of the nodes to calculate the influence of, with respect to row. If None
-    it calculates the influence of all nodes other than row.
+        it calculates the influence of all nodes other than row.
+
     :param limit_matrix_calc: A function with one parameter, that calculates the limit matrix.
+
     :param rank_change_nodes:  The nodes to look for rank change at
+
     :param error: While we narrow down our search for the p-value that causes a rank change, how close do we want
-    the values between a change happening and not, to be.
+        the values between a change happening and not, to be.
+
     :param upper_lower_both:  Do we want to:
-    * look for rank change only by changing p > 0.5=p0, if so upper_lower_both > 0
-    * look for rank change only by changing p < 0.5=p0, if so upper_lower_both < 0
-    * look for rank change by changing p>0.5 and p<0.5, if so upper_lower_both = 0
+        Case 1: look for rank change only by changing p > 0.5=p0, if so upper_lower_both > 0.
+        Case 2: look for rank change only by changing p < 0.5=p0, if so upper_lower_both < 0.
+        Case 3: look for rank change by changing p>0.5 and p<0.5, if so upper_lower_both = 0.
+
     :param round_to_decimal:  How many decimals should we round the score to for ranking purposes
+
     :param return_full_info: If True returns more info, see the return section for more details
+
     :return: A list of one or more numbers, controlled by return_full_info and upper_lower_both:
-    * If upper_lower_both < 0: our p-val search will only be for pval < 0.5
-      * If return_full_info is True:
-        We return pval_where_rank_chg_happens, score_of_that_pval
-      * Otherwise:
-        We return score_of_that_pval
-    * If upper_lower_both > 0: our pval search will only be for pval > 0.5
-      * If return_full_info is True:
-        We return pval_where_rank_chg_happens, score_of_that_pval
-      * Otherwise:
-        We return score_of_that_pval
-    * If upper_lower_both = 0: we check both lower and upper
-      * If return_full_info is True:
-        We return max_of_upper_lower_scores, lower_rank_value, lower_rank_chg_score, upper_rank_value, upper_rank_chg_score
-      * Otherwise we return:
-        max_of_upper_lower_scores
+
+        * If upper_lower_both < 0: our p-val search will only be for pval < 0.5
+
+          * If return_full_info is True:
+            We return pval_where_rank_chg_happens, score_of_that_pval
+          * Otherwise:
+            We return score_of_that_pval
+        * If upper_lower_both > 0: our pval search will only be for pval > 0.5
+
+          * If return_full_info is True:
+            We return pval_where_rank_chg_happens, score_of_that_pval
+          * Otherwise:
+            We return score_of_that_pval
+        * If upper_lower_both = 0: we check both lower and upper
+
+          * If return_full_info is True:
+            We return max_of_upper_lower_scores, lower_rank_value, lower_rank_chg_score, upper_rank_value, upper_rank_chg_score
+          * Otherwise we return:
+            max_of_upper_lower_scores
     '''
     n = len(mat)
     if influence_nodes is None:

@@ -9,3 +9,4 @@ Programmers Reference PyANP
 * :doc:`general`
 * :doc:`direct`
 * :doc:`prioritizer`
+* :doc:`rowsens`
