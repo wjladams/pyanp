@@ -1,12 +1,16 @@
 Programmers Reference PyANP
 ============================
 
-* :doc:`ahptree`
-* :doc:`pairwise`
-* :doc:`priority`
-* :doc:`limitmatrix`
-* :doc:`exmats`
-* :doc:`general`
-* :doc:`direct`
-* :doc:`prioritizer`
-* :doc:`rowsens`
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   ahptree
+   pairwise
+   priority
+   limitmatrix
+   exmats
+   general
+   direct
+   prioritizer
+   rowsens
