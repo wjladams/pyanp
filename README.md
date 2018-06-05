@@ -20,3 +20,4 @@ Python ANP Module and Resources
 # Tutorials
 
 * [Installing and getting started with Jupyter](tutorials/install.md)
+* [AHP Tree Calculations Tutorial](tutorials/ahptree.md)
