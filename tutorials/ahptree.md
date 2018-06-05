@@ -56,3 +56,10 @@ altscores = ahp.priority_table()
 altscores.plot(kind="bar")
 ```
 ![alt scores graph](imgs/alts1.png)
+
+### 3.5 Inconsistencies for all users and the group
+```python
+allincons = ahp.incond_std_table()
+allincons
+```
+<table border="1" class="dataframe">  <thead>    <tr style="text-align: right;">      <th></th>      <th>Group</th>      <th>Bill</th>      <th>John</th>      <th>Joseph</th>      <th>Ronald</th>      <th>Leanne</th>      <th>Blythe</th>    </tr>  </thead>  <tbody>    <tr>      <th>Goal</th>      <td>0.056856</td>      <td>6.982872e-01</td>      <td>2.689665</td>      <td>1.767344e+00</td>      <td>0.164491</td>      <td>0.008849</td>      <td>-8.540177e-16</td>    </tr>    <tr>      <th>A</th>      <td>0.239585</td>      <td>5.580869e-01</td>      <td>0.480769</td>      <td>7.068608e-02</td>      <td>0.090399</td>      <td>0.096090</td>      <td>4.028993e-01</td>    </tr>    <tr>      <th>B</th>      <td>0.000000</td>      <td>4.440892e-16</td>      <td>0.000000</td>      <td>4.440892e-16</td>      <td>0.000000</td>      <td>0.000000</td>      <td>0.000000e+00</td>    </tr>    <tr>      <th>C</th>      <td>0.000000</td>      <td>0.000000e+00</td>      <td>0.000000</td>      <td>0.000000e+00</td>      <td>0.000000</td>      <td>0.000000</td>      <td>0.000000e+00</td>    </tr>  </tbody></table>
