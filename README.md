@@ -17,7 +17,8 @@ Python ANP Module and Resources
     pip install git+https://github.com/wjladams/pyanp.git
     ```
  
-# Tutorials
+# Tutorials / Documentation
 
 * [Installing and getting started with Jupyter](tutorials/install.md)
-* [AHP Tree Calculations Tutorial](tutorials/ahptree.md)
+* [AHP Tree Tutorial](tutorials/ahptree.md)
+* [Programmers Reference](https://pyanp.readthedocs.io/)
