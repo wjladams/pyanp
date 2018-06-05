@@ -4,7 +4,7 @@ In this tutorial we will:
 1. Show you how to import the AHPTree class (which is what handles all AHP tree calculations)
 1. Read in a full AHP tree's data from a single excel spreadsheet
 1. Show some standard calculations and their results
-1. Review the format of the Excel file
+1. Resources for this tutorial
 
 ## 1. Importing the AHPTree class
 And a few other classes you will need for later parts of this tutorial
@@ -65,4 +65,6 @@ allincons
 <table border="1" class="dataframe">  <thead>    <tr style="text-align: right;">      <th></th>      <th>Group</th>      <th>Bill</th>      <th>John</th>      <th>Joseph</th>      <th>Ronald</th>      <th>Leanne</th>      <th>Blythe</th>    </tr>  </thead>  <tbody>    <tr>      <th>Goal</th>      <td>0.056856</td>      <td>6.982872e-01</td>      <td>2.689665</td>      <td>1.767344e+00</td>      <td>0.164491</td>      <td>0.008849</td>      <td>-8.540177e-16</td>    </tr>    <tr>      <th>A</th>      <td>0.239585</td>      <td>5.580869e-01</td>      <td>0.480769</td>      <td>7.068608e-02</td>      <td>0.090399</td>      <td>0.096090</td>      <td>4.028993e-01</td>    </tr>    <tr>      <th>B</th>      <td>0.000000</td>      <td>4.440892e-16</td>      <td>0.000000</td>      <td>4.440892e-16</td>      <td>0.000000</td>      <td>0.000000</td>      <td>0.000000e+00</td>    </tr>    <tr>      <th>C</th>      <td>0.000000</td>      <td>0.000000e+00</td>      <td>0.000000</td>      <td>0.000000e+00</td>      <td>0.000000</td>      <td>0.000000</td>      <td>0.000000e+00</td>    </tr>  </tbody></table>
 
 ## 4. Jupyter Notebook for this tutorial
-[Jupyter Notebook for this tutorial](../examples/AHPTreeEx1.ipynb)
+
+* [Jupyter Notebook for this tutorial](../examples/AHPTreeEx1.ipynb)
+* [Excel file used](../tests/AHPTreeData.xlsx)
