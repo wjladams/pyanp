@@ -6,7 +6,7 @@ In this tutorial we will:
 1. Review the format of the Excel file
 1. Show some standard calculations and their results
 
-## Importing the AHPTree class
+## 1. Importing the AHPTree class
 And a few other classes you will need for later parts of this tutorial
 
 ```python
@@ -20,7 +20,7 @@ import numpy as np
 from pyanp import ahptree
 ```
 
-## Loading data from an excel file
+## 2. Loading data from an excel file
 
 ```python
 excel_file = 'PATH_TO_YOUR_EXCEL_FILE'
