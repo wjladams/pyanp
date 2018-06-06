@@ -5,6 +5,7 @@ Contains all limit matrix calculations
 '''
 
 import numpy as np
+import pandas as pd
 from copy import deepcopy
 
 
@@ -389,3 +390,39 @@ def priority_from_limit(limit_matrix):
     n = len(rval)
     rval /= n
     return rval
+
+
+def get_matrix(fname_or_df)->np.ndarray:
+    '''
+    Returns a dataframe from a csv/excel filename (or simply returns the
+    dataframe if it is passed as input
+
+    :param fname_or_df: The file name to get as a dataframe, or a dataframe
+    (in which case that param is returned)
+
+    :return: The dataframe
+    '''
+    if isinstance(fname_or_df, str):
+        fname = fname_or_df.lower()
+        rval = None
+        if fname.endswith(".csv"):
+            rval = pd.read_csv(fname_or_df)
+        elif fname.endswith(".xls") or fname.endswith(".xlsx"):
+            rval = pd.read_excel(fname_or_df)
+        # I need to know if the columns were without headers
+        try:
+            fvals = [float(v) for v in rval.columns]
+            # column names were all numbers, that indicates there was no header
+            if fname.endswith(".csv"):
+                rval = pd.read_csv(fname_or_df, header=None)
+            elif fname.endswith(".xls") or fname.endswith(".xlsx"):
+                rval = pd.read_excel(fname_or_df, header=None)
+        except:
+            pass
+    elif isinstance(fname_or_df, pd.DataFrame):
+        rval = fname_or_df
+    elif isinstance(fname_or_df, np.ndarray):
+        return fname_or_df
+    else:
+        raise ValueError("Cannot handle your stuff")
+    return rval.values.copy()

@@ -2,6 +2,9 @@
 Generally useful math and other functions.
 '''
 
+import numpy as np
+import pandas as pd
+
 def linear_interpolate(xs, ys, x):
     '''
     Piecewise linear interpolation between a bunch of x and y coordinates.
@@ -42,4 +45,5 @@ def islist(val):
         return False
     else:
         return hasattr(val, "__len__")
+
 
