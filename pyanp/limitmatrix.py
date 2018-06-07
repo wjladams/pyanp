@@ -114,7 +114,17 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
     start = _mat_pow2(mat, start_pow)
     if use_hierarchy_formula and (np.max(abs(start))==0):
         # This matrix is for a hiearchy, use that formula
-        return hiearhcy_formula(mat)
+        # But we need to check that it really is a hierarchy and not something
+        # that disappears because of round off error
+        start_pow = size
+        start = _mat_pow2(mat, start_pow)
+        if np.max(abs(start)) == 0:
+            # It truly was a hieratchy, do that
+            return hiearhcy_formula(mat)
+        else:
+            # Not really a hierarchy, but we have adapted start_pow for this
+            # case, so I will continue
+            pass
     tmp1 = deepcopy(mat)
     tmp2 = deepcopy(mat)
     tmp3 = deepcopy(mat)
@@ -127,7 +137,11 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
         # print(diff)
         if diff < error:
             # Already converged, done
-            return pows[-1]
+            mysum = pows[-1].sum(axis=0)
+            for i in range(len(mysum)):
+                if mysum[i]==0:
+                    mysum[i]=1
+            return pows[-1] / mysum
     # print(pows)
     for count in range(max_iters):
         nextp = pows[0]
@@ -144,7 +158,11 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
             # print(nextp)
             # print(diff)
             if diff < error:
-                return nextp / nextp.sum(axis=0)
+                mysum = nextp.sum(axis=0)
+                for i in range(len(mysum)):
+                    if mysum[i] == 0:
+                        mysum[i] = 1
+                return nextp / mysum
 
 
 def normalize_cols_dist(mat1, mat2, tmp1=None, tmp2=None, tmp3=None, col_scale_type=None):
@@ -340,12 +358,13 @@ def limit_newhierarchy(mat, with_limit=False, error=1e-10, col_scale_type = None
     net_nodes = [i for i in range(n) if i not in hier_nodes]
     (B, z1, A, C) = two_two_breakdown(mat, net_nodes)
     if len(net_nodes) == n:
+        print("Our network nodes are :"+str(net_nodes))
         return calculus(mat)
     elif len(hier_nodes) == n:
         return hiearhcy_formula(mat)
     limitB = calculus(B)
     limitC = calculus(C)
-    lowerLeftCorner = np.matmul(A, limitB) + np.matmul(B, C)
+    lowerLeftCorner = np.matmul(A, limitB) + np.matmul(C, A)
     lowerLeftCorner = normalize(lowerLeftCorner)
     if with_limit:
         laststep = lowerLeftCorner
@@ -355,8 +374,9 @@ def limit_newhierarchy(mat, with_limit=False, error=1e-10, col_scale_type = None
         tmp3 = deepcopy(mat)
         count = 0
         while (diff > error) and (count < max_count):
-            nextstep = np.matmul(A, laststep) + np.matmul(B, C)
-            diff = normalize_cols_dist(laststep, nextstep, tmp1, tmp2, tmp3, col_scale_type=col_scale_type)
+            nextstep = np.matmul(A, limitB) + np.matmul(limitC, A)
+            # diff = normalize_cols_dist(laststep, nextstep, tmp1, tmp2, tmp3, col_scale_type=col_scale_type)
+            diff = normalize_cols_dist(laststep, nextstep, None, None, None, col_scale_type=col_scale_type)
             laststep = nextstep
             count+=1
         lowerLeftCorner = nextstep
