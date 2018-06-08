@@ -22,4 +22,5 @@ Python ANP Module and Resources
 * [Installing and getting started with Jupyter](tutorials/install.md)
 * [AHP Tree Tutorial](tutorials/ahptree.md)
 * [Limit matrix calculations Tutorial](tutorials/limitmatrix.md)
+* [Priority calculations Tutorial](tutorials/priority.md)
 * [Programmers Reference](https://pyanp.readthedocs.io/)
