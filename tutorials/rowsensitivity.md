@@ -6,7 +6,7 @@ In this tutorial we will learn how to:
 2. Read in super matrices from csv/excel files
 3. Directly input super matrices
 4. Standard calculations
-5. Create row sensitivity graphs
+5. Row sensitivvity (aka influence) graphs
 6. Find the programmers reference for all row sensitivity functions
 7. Find the resources for this tutorial
 
@@ -106,11 +106,110 @@ and the result is:
 ```
 array([0.1158, 0.3511, 0.0998, 0.3282])
 ```
-# 5. Create row sensitivity graphs
+
+## 4.3 Influence table (aka row sensitivity table)
+```python
+rowsens.influence_table(mat=mat42, row=0, p0mode=0.5, pvals=[0.05, 0.25, 0.45, 0.55, 0.75, 0.95], graph=False)
+```
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>x</th>
+      <th>Node 1</th>
+      <th>Node 2</th>
+      <th>Node 3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.05</td>
+      <td>0.446071</td>
+      <td>0.120199</td>
+      <td>0.433730</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.25</td>
+      <td>0.447966</td>
+      <td>0.125667</td>
+      <td>0.426366</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.45</td>
+      <td>0.449553</td>
+      <td>0.131009</td>
+      <td>0.419438</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.55</td>
+      <td>0.443208</td>
+      <td>0.140904</td>
+      <td>0.415887</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.75</td>
+      <td>0.420877</td>
+      <td>0.170626</td>
+      <td>0.408498</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.95</td>
+      <td>0.403701</td>
+      <td>0.194678</td>
+      <td>0.401620</td>
+    </tr>
+  </tbody>
+</table>
+
+To get the p0vals and the dataframe pass in the option `return_p0vals=True`, and it will return a tuple with 2 elements.
+The first element is the dataframe as seen above, and the 2nd element is a Series whose index is the name of the nodes
+and the values are their (x,y) coordinates of the resting value.  For instance
+
+```python
+info = rowsens.influence_table(mat=mat42, row=0, p0mode=0, pvals=[0.05, 0.25, 0.45, 0.55, 0.75, 0.95], graph=False, return_p0vals=True)
+info[1]
+```
+the result is:
+```
+Node 1    (0.20151466567508464, 0.4455831568563379)
+Node 2     (0.2772381012245286, 0.1338053437448815)
+Node 3       (0.2303361586922446, 0.41952169846835)
+```
+
+# 5. Row sensitivvity (aka influence) graphs
+The best way to show the row sensitivity graphs is with `p0mode=None`, which uses the smart p0 value
+for each node, making the graphs smooth.  Let's do it with p0mode=None first.  Since None is the default
+p0mode value, we do not need to specify it
+```python
+rowsens.influence_table(mat=mat42, row=0)
+```
+![smart p0s for all](imgs/rowsens-smartp0sall.png)
+
+With p0mode=0.5, that will be the resting value for each alternative, and the code and image looks like:
+
+```python
+rowsens.influence_table(mat=mat42, row=0, p0mode=0.5)
+```
+![smart p0s for all](imgs/rowsens-p00.5all.png)
 
 
-# 6. Find the programmers reference for all row sensitivity functions
+
+# 6.Programmers reference for row sensitivity
+
+* [Programmers reference for all anp row sensitivity and influence calculations](https://pyanp.readthedocs.io/en/latest/refs/rowsens.html)
 
 
 # 7. Find the resources for this tutorial
+
+* [Jupyter notebook with all sample code](../examples/ANPRowSens.ipynb)
+* [4x4 supermatrix without headers](../examples/supermatrix4x4.csv)
+* [4x4 supermatirx with headers](../examples/supermatrix4x4-headers.csv)
+* [4x4 supermatrix with interesting sensitivity](../examples/supermatrix4x4-2.csv)
+
 
