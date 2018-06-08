@@ -384,9 +384,13 @@ class AHPTree(Prioritizer):
     def add_child(self, childname:str, undername:str=None)->None:
         '''
         Adds a child node of a given name under a node.
+
         :param childname: The name of the child to add.
+
         :param undername: The name of the node to add the child under
+
         :return: Nothing
+
         :raises ValueError: If undername was not a node, or if childname already existed as a node.
         '''
         if undername is None:
@@ -406,7 +410,9 @@ class AHPTree(Prioritizer):
         '''
         :param nodename: The string name of the node to get.  If None, we return the root node.
         If nodename is actually an AHPTreeObject, we simply return that object.
+
         :return: The AHPTreeNode object corresponding to the node with the given name
+
         :raises KeyError: If no such node existed
         '''
         if nodename is None:
@@ -417,13 +423,16 @@ class AHPTree(Prioritizer):
             nodes = self.get_nodes_hash()
             return nodes[nodename]
 
-    def nodenames(self, undername:str=None, rval=None):
+    def nodenames(self, undername:str=None, rval=None)->list:
         '''
         Name of all nodes under the given node, including that node.
+
         :param undername: The name of the node to get all nodes under, but only if underNode is not set.
         It can also be an AHPTreeNode, but that is really for internal use only
+
         :param rval: If not
-        :return:
+
+        :return: The node names as a list
         '''
         if rval is None:
             rval = []
@@ -446,13 +455,17 @@ class AHPTree(Prioritizer):
     def global_priority(self, username = None, rvalSeries=None, undername:str=None, parentMultiplier=1.0) -> pd.Series:
         '''
         Calculates and returns the global priorities of the nodes.
+
         :param username: The name/names of the users to calculate for.  None means the group average.
+
         :param rvalSeries: If not None, add the results to that series
+
         :param undername: If None, use the root node, otherwise a string for the name of the node to go under.  Internally
-        we also allow for AHPTreeNode's to be passed in this way.
+            we also allow for AHPTreeNode's to be passed in this way.
+
         :param parentMultiplier: The value to multiply the child priorities by.
-        :return:
-        The global priorities as a Series whose index is the node names, and values are the global priorities.
+
+        :return: The global priorities as a Series whose index is the node names, and values are the global priorities.
         '''
         if rvalSeries is not None:
             rval = rvalSeries
@@ -471,9 +484,9 @@ class AHPTree(Prioritizer):
     def global_priority_table(self)->pd.DataFrame:
         '''
         Calculates the global priorities for every user, and the group
-        :return:
-        A dataframe whose columns are "Group" for the total group average, and then each user name.  The
-        rows are the node names, and values are the global priority for the given node and user.
+
+        :return: A dataframe whose columns are "Group" for the total group average, and then each user name.  The
+            rows are the node names, and values are the global priority for the given node and user.
         '''
         average = self.global_priority()
         rval = pd.DataFrame(index=average.index)
@@ -485,8 +498,7 @@ class AHPTree(Prioritizer):
 
     def priority_table(self)->pd.DataFrame:
         '''
-        :return:
-        A dataframe whose columns are "Group" for the total group average, and then each user name.
+        :return: A dataframe whose columns are "Group" for the total group average, and then each user name.
         The rows are the alternative names, and the values are the alternative scores for each user.
         '''
         average = self.priority()
@@ -501,11 +513,13 @@ class AHPTree(Prioritizer):
         '''
         Calcualtes the standard inconsistency score for the pairwise comparison of the children nodes
         for the given user
+
         :param username: The string name/names of users to do the inconsistency for.  If more than one user
-        we average their pairwise comparison matrices and then calculate the incosnsitency of the result.
+            we average their pairwise comparison matrices and then calculate the incosnsitency of the result.
+
         :param wrt: The name of the node to get the inconsistency around.  If None, we use the root node.
-        :return:
-        The standard Saaty inconsistency score.
+
+        :return: The standard Saaty inconsistency score.
         '''
         node = self.get_node(wrt)
         if isinstance(node.child_prioritizer, Pairwise):
@@ -516,11 +530,13 @@ class AHPTree(Prioritizer):
     def nodes(self, undername:str=None, rval=None):
         '''
         Returns the AHPTreeNode objects under the given node, including that node
+
         :param undername: The string name of the node to get the nodes under.  It can also be an AHPTreeNode object
-        as well.  If None it means the root node.
+            as well.  If None it means the root node.
+
         :param rval: If not None, it should be a list to add the AHPTreeNode's to.
-        :return:
-        The list of AHPTreeNode objects under the given node.
+
+        :return: The list of AHPTreeNode objects under the given node.
         '''
         underNode = self.get_node(undername)
         if rval is None:
@@ -534,10 +550,11 @@ class AHPTree(Prioritizer):
         '''
         Calculates the inconsistency for all wrt nodes for a user / user group.  See AHPTree.incon_std()
         for details about the actual calculation.
+
         :param username: The name/names of the user to calculate the inconsistency for.
-        :return:
-        A pandas.Series whose index is wrt node names, and whose values are the inconsistency of the given user(s)
-        on that comparison.
+
+        :return: A pandas.Series whose index is wrt node names, and whose values are the inconsistency of the given user(s)
+            on that comparison.
         '''
         nodes = self.nodes()
         nodesWithKids = [node for node in nodes if node.has_children()]
@@ -548,10 +565,10 @@ class AHPTree(Prioritizer):
     def incond_std_table(self)->pd.DataFrame:
         '''
         Calculates the inconsistency for all users and wrt nodes in this tree.
-        :return:
-        A pandas.DataFrame whose columns are users (first column is called "Group" and is for the group average) and
-        whose rows are wrt nodes.  The values are the inconsistencies for the given user on the give wrt node's
-        pairwise comparison.
+
+        :return: A pandas.DataFrame whose columns are users (first column is called "Group" and is for the group average) and
+            whose rows are wrt nodes.  The values are the inconsistencies for the given user on the give wrt node's
+            pairwise comparison.
         '''
         average = self.incon_std_series(username=None)
         rval = pd.DataFrame(index=average.index)
@@ -564,11 +581,13 @@ class AHPTree(Prioritizer):
     def node_pwmatrix(self, username, wrt:str)->np.ndarray:
         '''
         Gets the pairwise comparison matrix for the nodes under wrt.
+
         :param username: The name/names of the users to get the pairwise comparison of.
+
         :param wrt: The name of the wrt node, or the AHPTreeNode object.
-        :return:
-        A numpy array of the pairwise comparison information.  If more than one user specified in usernames param
-        we take the average of the group.
+
+        :return: A numpy array of the pairwise comparison information.  If more than one user specified in usernames param
+            we take the average of the group.
         '''
         node = self.get_node(wrt)
         pri = node.child_prioritizer
