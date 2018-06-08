@@ -8,7 +8,7 @@ In this tutorial we will learn how to:
 4. Standard calculations
 5. Row sensitivvity (aka influence) graphs
 6. Find the programmers reference for all row sensitivity functions
-7. Find the resources for this tutorial
+7. Find the resources used in this tutorial
 
 # 1. Load the necessary libraries
 The library you need is `pyanp.rowsens`, but we will also make use of `numpy` and `pandas` so we will import those as well.
