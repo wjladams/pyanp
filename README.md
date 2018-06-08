@@ -1,7 +1,11 @@
 # pyanp
 
-[![Join the chat at https://gitter.im/pythonanp/Lobby](https://badges.gitter.im/pythonanp/Lobby.svg)](https://gitter.im/pythonanp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-Python ANP Module and Resources
+A Python library for [AHP (Analytic Hierarchy Process)](https://en.wikipedia.org/wiki/Analytic_hierarchy_process)
+and [ANP (Analytic Network Process)](https://en.wikipedia.org/wiki/Analytic_network_process).  It should be of great use for:
+
+* ANP/AHP researchers interested in extending the theory
+* Practioneers needing to do calculations
+* Students learning the theory
 
 # Installation
 
