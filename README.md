@@ -23,4 +23,5 @@ Python ANP Module and Resources
 * [AHP Tree Tutorial](tutorials/ahptree.md)
 * [Limit matrix calculations Tutorial](tutorials/limitmatrix.md)
 * [Priority calculations Tutorial](tutorials/priority.md)
+* [How to start contributing](tutorials/contrib.md)
 * [Programmers Reference](https://pyanp.readthedocs.io/)
