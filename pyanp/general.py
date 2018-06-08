@@ -47,6 +47,10 @@ def islist(val):
         return hasattr(val, "__len__")
 
 
+def index_is_numeric(series:pd.Series)->bool:
+    dtype = str(series.dtype)
+    return dtype.startswith("float")  or dtype.startswith("int")
+
 def get_matrix(fname_or_df)->np.ndarray:
     '''
     Returns a dataframe from a csv/excel filename (or simply returns the
@@ -60,20 +64,26 @@ def get_matrix(fname_or_df)->np.ndarray:
     if isinstance(fname_or_df, str):
         fname = fname_or_df.lower()
         rval = None
+        indexcol = 0
+        header = 0
         if fname.endswith(".csv"):
-            rval = pd.read_csv(fname_or_df, index_col=0)
+            rval = pd.read_csv(fname_or_df, index_col=None, header=None)
+            if index_is_numeric(rval.iloc[:,0]):
+                # Whoops, no index column
+                indexcol=None
+            if index_is_numeric(rval.iloc[0,:]):
+                header=None
+            #Now we know
+            rval = pd.read_csv(fname_or_df, index_col=indexcol, header=header)
         elif fname.endswith(".xls") or fname.endswith(".xlsx"):
-            rval = pd.read_excel(fname_or_df)
-        # I need to know if the columns were without headers
-        try:
-            fvals = [float(v) for v in rval.columns]
-            # column names were all numbers, that indicates there was no header
-            if fname.endswith(".csv"):
-                rval = pd.read_csv(fname_or_df, header=None)
-            elif fname.endswith(".xls") or fname.endswith(".xlsx"):
-                rval = pd.read_excel(fname_or_df, header=None)
-        except:
-            pass
+            rval = pd.read_excel(fname_or_df, index_col=None, header=None)
+            if index_is_numeric(rval.iloc[:, 0]):
+                # Whoops, no index column
+                indexcol = None
+            if index_is_numeric(rval.iloc[0, :]):
+                header = None
+            # Now we know
+            rval = pd.read_excel(fname_or_df, index_col=indexcol, header=header)
     elif isinstance(fname_or_df, pd.DataFrame):
         rval = fname_or_df
     elif isinstance(fname_or_df, np.ndarray):

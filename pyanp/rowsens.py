@@ -4,9 +4,8 @@ All ANP row sensitivity calculations are in this module.
 
 import pandas as pd
 from copy import deepcopy
-from pyanp.general import linear_interpolate
-from enum import Enum
-from pyanp.limitmatrix import calculus, priority_from_limit
+from pyanp.general import linear_interpolate, get_matrix
+from pyanp.limitmatrix import calculus, priority_from_limit, priority
 from scipy.stats import rankdata
 import numpy as np
 import matplotlib.pyplot as plt
@@ -209,7 +208,8 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
     '''
     n = len(mat)
     if influence_nodes is None:
-        influence_nodes = [i for i in range(n) if i != row]
+        #influence_nodes = [i for i in range(n) if i != row]
+        influence_nodes = list(range(n))
     orig_lim = calculus(mat)
     orig_pri = priority_from_limit(orig_lim)[influence_nodes]
     orig_pri /= sum(abs(orig_pri))
@@ -243,7 +243,8 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
     rval = pd.Series(data=(left_deriv + right_deriv)/2, index=influence_nodes)
     return rval
 
-def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=None, p0mode=None, limit_matrix_calc=calculus, graph=True):
+def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=None,
+                    p0mode=None, limit_matrix_calc=calculus, graph=True, return_p0vals=False):
     '''
     Calculates the direct influence score, i.e. it calculates anp row sensitivity for each of pvals values and
     stores the new scores of the influence_nodes.
@@ -271,13 +272,20 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
 
     :param graph: If True, we return a matplotlib graph, otherwise we return pandas.DataFrame, p0vals
 
+    :param return_p0vals: If true and not doing graphing, we return a tuple of the dataframe of
+        the results, and the 2nd item as Series whose index is the names of the nodes, and whose values
+        are the (x,y) position of the resting p0 value
+
     :return: If graph=True, we return nothing, but create a matplotlib object and call plt.show().  Otherwise
+        if return_p0vals is True
         we return a pair of items.  The first is the dataframe of results, whose indices are "Node 1", "Node 2", ...
         which corresponds to influence_nodes (and the indices after "Node " are the influence_node indices)
         and has 2 columns, 'x' is the pvals and 'y' is the resulting influence
         score (i.e. changed priority).  The second element is a pd.Series whose indices is the same as the dataframe
         and whose values are pairs of items (x,y) where x is the p0 value for the given alternative and the y is the
         influence score of that alternative at that p-value.
+
+        If return_p0vals is False we return the first dataframe item only.
     '''
     if pvals is None:
         xs = [i / 50 for i in range(1, 50)]
@@ -316,7 +324,10 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
         plt.legend()
         plt.show()
     else:
-        return df, pvals
+        if return_p0vals:
+            return df, pvals
+        else:
+            return df
 
 def influence_table_plot(df, p0s):
     '''
@@ -390,7 +401,7 @@ def influence_limit(mat, row, cluster_nodes=None, influence_nodes=None, delta=1e
     return limits, p0s
 
 def row_adjust_priority(mat, row, p, cluster_nodes=None, p0mode=None, limit_matrix_calc=calculus,
-                        normalize_to_orig=False):
+                        normalize_to_orig=True):
     '''
     Adjusts a row of matrix and recalculates the priorities of all the nodes.
 

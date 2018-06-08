@@ -411,3 +411,16 @@ def priority_from_limit(limit_matrix):
     rval /= n
     return rval
 
+def priority(matrix, limit_calc=calculus):
+    '''
+    Calculates the limit matrix and extracts priority from it.  Really just
+    a convenience function.
+
+    :param matrix: The scaled supermatrix to calculate the priority for
+
+    :param limit_calc: The limit matrix calculation to use
+
+    :return: The priority as a series
+    '''
+    lmat = limit_calc(matrix)
+    return priority_from_limit(lmat)
