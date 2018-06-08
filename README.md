@@ -6,6 +6,7 @@ and [ANP (Analytic Network Process)](https://en.wikipedia.org/wiki/Analytic_netw
 * ANP/AHP researchers interested in extending the theory
 * Practioneers needing to do calculations
 * Students learning the theory
+* Practioneers and Theorists wishing to publish using [Open Data](https://en.wikipedia.org/wiki/Open_data)
 
 # Installation
 
