@@ -4,6 +4,7 @@ All pairwise matrix to priority vector calculations
 @author: Dr. Bill Adams
 '''
 import numpy as np
+from pyanp.general import get_matrix
 
 ######################################################
 #### Priority Vector Calculations                 ####
