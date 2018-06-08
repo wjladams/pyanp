@@ -27,13 +27,13 @@ from pyanp import priority
 
 To load from a CSV or Excel (it is the same function), with or without headers
 ```python
-matrix = priority.get_matrix("pairwise3x3-1.csv")
-#this is the same matrix but with headers
-matrix = priority.get_matrix("pairwise3x3-1-headers.csv")
+mat3 = priority.get_matrix("pairwise3x3-1.csv")
+#this gives the same matrix but with headers
+mat3 = priority.get_matrix("pairwise3x3-1-headers.csv")
 ```
 To directly input the matrix
 ```python
-mat4a = np.array([
+mat4 = np.array([
     [1, 2, 3, 4],
     [1/2, 1, 5, 6],
     [1/3, 1/5, 1, 7],
@@ -41,11 +41,68 @@ mat4a = np.array([
 ])
 ```
 
-## 3. Calculating the standard largest eigenvector priority, eigenvalue, and inconsistency
+## 3. Calculating the largest eigenvector priority, eigenvalue, and inconsistency
+```python
+priority.pri_eigen(mat3)
+```
+result is:
+```
+array([0.5816, 0.309 , 0.1095])
+```
+Now let's calculate the eigenvalue
+```python
+priority.pri_eigen(mat3, return_eigenval=True)
+```
+result is:
+```
+3.0036945980662293
+```
+And finally calculate the inconsistency
+```python
+priority.incon_std(mat3)
+```
+the result is:
+```
+0.0035524981406050895
+```
 
 ## 4. New priority calculations
+To beter see the differences, we will use the `mat4` 4x4 example matrix.
+
+### 4.1 The original largest eigenvector calculation
+```python
+priority.pri_eigen(mat4)
+```
+the result is:
+```
+array([0.4082, 0.3758, 0.1632, 0.0528])
+```
+
+### 4.2 New exponential eigenvector calculation
+```python
+priority.pri_expeigen(mat4)
+```
+the result is:
+```
+array([0.2244, 0.1985, 0.0689, 0.5081])
+```
+
+### 4.3 Geometric mean of columns AKA llsm
+```python
+priority.pri_llsm(mat4)
+```
+the result is:
+```
+array([0.2672, 0.1841, 0.0642, 0.4845])
+```
 
 ## 5. Further references
 
+[The Programmers Reference for `pyanp.priority`](https://pyanp.readthedocs.io/en/latest/refs/priority.html)
+
 ## 6. Jupyter notebook and references for this tutorial
 
+* [Jupyter notebook with these examples](../examples/PriorityCalculations.ipynb)
+* [3x3 example spreadsheet without headers](../examples/pairwise3x3-1.csv)
+* [3x3 example spreadsheet with headers](../examples/pairwise3x3-1-headers.csv)
+* [4x4 example without headers](../examples/pairwise4x4-1.csv)
