@@ -93,7 +93,7 @@ class Pairwise(Prioritizer):
         data = [None]*(ncols-1)+[self._blank_pairwise()]
         self.df.loc[user_name] = data
 
-    def add_alt(self, alt_name:str)->None:
+    def add_alt(self, alt_name:str, ignore_existing=False)->None:
         '''
         Adds an alternative (thing you are pairwise comparing) to this group
         pairwise comparison object.
@@ -105,7 +105,10 @@ class Pairwise(Prioritizer):
         :raises ValueError: If the alternative already esisted.
         '''
         if self.is_alt(alt_name):
-            raise ValueError("Alt "+alt_name+" already existed")
+            if ignore_existing:
+                return
+            else:
+                raise ValueError("Alt "+alt_name+" already existed")
         self.alts.append(alt_name)
         for user in self.df.index:
             mat = self.matrix(user)
@@ -143,6 +146,8 @@ class Pairwise(Prioritizer):
             return self.df.loc[user_name, "Matrix"]
         else:
             mats = [self.df.loc[user, 'Matrix'] for user in user_name]
+            if len(mats) == 0:
+                return np.identity(self.nalts(), dtype=float)
             return geom_avg_mats(mats)
 
     def incon_std(self, user_name)->float:

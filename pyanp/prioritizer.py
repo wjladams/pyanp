@@ -69,7 +69,7 @@ class Prioritizer:
     for doing group AHP tree models.
     '''
 
-    def add_alt(self, alt_name:str)->None:
+    def add_alt(self, alt_name:str, ignore_existing=True)->None:
         '''
         Add an alternative to the prioritizer.  This should be overriden by
         the implementing class.

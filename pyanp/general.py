@@ -91,3 +91,18 @@ def get_matrix(fname_or_df)->np.ndarray:
     else:
         raise ValueError("Cannot handle your stuff")
     return rval.values.copy()
+
+
+def unwrap_list(list_ish):
+    '''
+    Takes something that is a list(list(tuple(e1, e2))) and unwraps til we
+    have (e1, e2).
+
+    :param list_ish: The list to unwrap
+
+    :return: Unwrapped version of list
+    '''
+
+    while islist(list_ish) and len(list_ish)==1:
+        list_ish=list_ish[0]
+    return list_ish
