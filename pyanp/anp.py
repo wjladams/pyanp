@@ -7,6 +7,7 @@ import pandas as pd
 from copy import deepcopy
 from pyanp.limitmatrix import normalize, calculus, priority_from_limit
 import numpy as np
+import re
 
 class ANPNode:
     '''
@@ -180,6 +181,23 @@ def get_item(tbl:dict, index:int):
         #Should never make it here
         raise ValueError("Shouldn't happen in anp.get_item")
 
+__CLEAN_SPACES_RE = re.compile('\\s+')
+
+def clean_name(name:str)->str:
+    '''
+    Cleans up a string for usage by:
+
+    1. stripping off begging and ending spaces
+    2. All spaces convert to one space
+    3. \t and \n are treated like a space
+
+    :param name:
+    :return:
+    '''
+    rval = name.strip()
+    return __CLEAN_SPACES_RE.sub(string=rval, repl=' ')
+
+
 class ANPNetwork(Prioritizer):
     '''
     Represents an ANP prioritizer.  Has clusters/nodes, comparisons, etc.
@@ -232,6 +250,14 @@ class ANPNetwork(Prioritizer):
         '''
         if isinstance(cluster_info, ANPCluster):
             return cluster_info
+        elif isinstance(cluster_info, int):
+            count = 0
+            for cl in self.clusters.values():
+                if count == cluster_info:
+                    return cl
+                count+=1
+            #Made it here, was too big
+            raise ValueError("Cluster int was too big")
         else:
             return self.clusters[cluster_info]
 
@@ -420,7 +446,7 @@ class ANPNetwork(Prioritizer):
         '''
         :return: The scaled supermatrix
         '''
-        rval = self.unscaled_supermatrix()
+        rval = self.unscaled_supermatrix(username)
         normalize(rval, inplace=True)
         return rval
 
@@ -501,3 +527,46 @@ class ANPNetwork(Prioritizer):
                 if src_node.is_node_node_connection(node_names[dest_node_pos]):
                     rval[dest_node_pos, src_node_pos] = 1
         return rval
+
+    def import_pw_series(self, series:pd.Series)->None:
+        '''
+        Takes in a well titled series of data, and pushes it into the right
+        node's prioritizer (or cluster).
+
+        :param series: The series of data for each user.  Index is usernames.
+            Values are the votes.
+
+        :return: Nothing
+        '''
+        name = series.name
+        name = clean_name(name)
+        info = name.split(' wrt ')
+        if len(info) < 2:
+            # We cannot do anything with this, we need a wrt
+            raise ValueError("No wrt in "+name)
+        wrt = info[1].strip()
+        wrtNode:ANPNode
+        wrtNode = self._get_node(wrt)
+        info = info[0].split( ' vs ')
+        if len(info) < 2:
+            raise ValueError(" vs was not present in "+name)
+        row, col = info
+        rowNode = self._get_node(row)
+        colNode = self._get_node(col)
+        if rowNode.cluster.name != colNode.cluster.name:
+            raise ValueError(" comparing nodes not exiting in same cluster")
+        npri:Pairwise
+        npri = wrtNode.get_node_prioritizer(rowNode, create=True)
+        if not isinstance(npri, Pairwise):
+            raise ValueError("Node prioritizer was not pairwise")
+        npri.vote_series(series, row, col, createUnknownUser=True)
+
+    def set_alts_cluster(self, new_cluster):
+        '''
+        Sets the new alternatives cluster
+
+        :param new_cluster:
+        :return:
+        '''
+        cl = self._get_cluster(new_cluster)
+        self.alts_cluster = cl

@@ -115,7 +115,7 @@ class Pairwise(Prioritizer):
             self.df.loc[user, "Matrix"] = add_place(mat)
 
 
-    def matrix(self, user_name, createUnknownUser:bool=True)->np.ndarray:
+    def matrix(self, user_name=None, createUnknownUser:bool=True)->np.ndarray:
         '''
         Gets the pairwise comparison for a user or group of users.
 
@@ -184,6 +184,28 @@ class Pairwise(Prioritizer):
         if alt_name_or_index not in self.alts:
             raise ValueError("No such alt "+alt_name_or_index)
         return self.alts.index(alt_name_or_index)
+
+    def vote_series(self, votes:pd.Series, row, col, createUnknownUser:bool=True)->None:
+        '''
+        Changes a single pairwise value for a series of users.
+
+        :param votes: Series whose index is usernames and values are their votes.
+
+        :param row: The integer or string name of the row to compare at.
+
+        :param col: The integer or string name of the column to compare at.
+
+
+        :param createUnknownUser: If True and a username does not exist in this
+            object, we will create it first, then do the comparison.  Otherwise
+            it throws an exception for unknown users.
+
+        :return: Nothing
+
+        :raises ValueError: If the user does not exist and createUnknownUsers is False.
+        '''
+        for uname, val in votes.iteritems():
+            self.vote(uname, row, col, val, createUnknownUser=createUnknownUser)
 
     def vote(self, user_name:str, row, col, val:float=0, createUnknownUser:bool=True)->None:
         '''
