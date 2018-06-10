@@ -118,7 +118,7 @@ class Prioritizer:
         '''
         raise ValueError("Should be overriden in subclass")
 
-    def ussernames(self):
+    def user_names(self):
         '''
         :return: A list of the users in this prioritizer object.
         '''
@@ -126,3 +126,9 @@ class Prioritizer:
 
     def _repr_html(self, tab="\t"):
         raise ValueError("Should override in subclass")
+
+    def alt_names(self):
+        '''
+        :return: A list of the alts in this prioritizer object.
+        '''
+        raise ValueError("Should be overriden in subclass")

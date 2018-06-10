@@ -45,3 +45,8 @@ class TestANPNetwork(TestCase):
             [0., 0.33333333, 0.33333333 ,0.33333333]
         ])
         assert_allclose(should, mat)
+        should = [0.500000, 1./6, 1/6, 1/6]
+        gp = net.global_priorities()
+        assert_allclose(should, gp)
+        pri = net.priority(username=None)
+        assert_allclose(pri, [1.0])

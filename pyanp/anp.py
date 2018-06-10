@@ -5,6 +5,7 @@ from pyanp.general import islist, unwrap_list
 from typing import Union
 import pandas as pd
 from copy import deepcopy
+from pyanp.limitmatrix import normalize, calculus, priority_from_limit
 import numpy as np
 
 class ANPNode:
@@ -182,6 +183,7 @@ class ANPNetwork(Prioritizer):
         cl = self.add_cluster("Alternatives")
         self.alts_cluster = cl
         self.users=[]
+        self.limitcalc = calculus
 
     def add_cluster(self, *args)->ANPCluster:
         '''
@@ -287,7 +289,7 @@ class ANPNetwork(Prioritizer):
         '''
         return len(self.users)
 
-    def ussernames(self):
+    def user_names(self):
         '''
         :return: List of names of the users
         '''
@@ -390,7 +392,7 @@ class ANPNetwork(Prioritizer):
                     rval[dest,src]=1
         return rval
 
-    def unscaled_supermatrix(self):
+    def unscaled_supermatrix(self, username=None):
         '''
         :return: The unscaled supermatrix
         '''
@@ -400,6 +402,53 @@ class ANPNetwork(Prioritizer):
         col = 0
         node:ANPNode
         for node in nodes:
-            rval[:,col] = node.get_unscaled_column()
+            rval[:,col] = node.get_unscaled_column(username)
             col += 1
+        return rval
+
+    def scaled_supermatrix(self, username=None):
+        '''
+        :return: The scaled supermatrix
+        '''
+        rval = self.unscaled_supermatrix()
+        normalize(rval, inplace=True)
+        return rval
+
+    def global_priorities(self, username=None):
+        '''
+
+        :param username:
+        :return: The global priorities Series, index by node name
+        '''
+        lm = self.limit_matrix(username)
+        rval = priority_from_limit(lm)
+        node_names = self.node_names()
+        return pd.Series(data=rval, index=node_names)
+
+    def limit_matrix(self, username=None):
+        sm = self.scaled_supermatrix(username)
+        rval = self.limitcalc(sm)
+        return rval
+
+    def alt_names(self):
+        '''
+        :return: List of alt names in this ANP model
+        '''
+        return self.alts_cluster.node_names()
+
+    def priority(self, username=None, ptype:PriorityType=None):
+        '''
+        Synthesize and return the alternative scores
+
+        :param username: The user/users to synthesize for
+
+        :param ptype: The priority type to use
+
+        :return: A pandas.Series indexed on alt names, values are the score
+        '''
+        gp = self.global_priorities(username)
+        alt_names = self.alt_names()
+        rval = gp[alt_names]
+        if sum(rval) != 0:
+            rval /= sum(rval)
         return rval

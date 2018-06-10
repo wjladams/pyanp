@@ -407,8 +407,9 @@ def priority_from_limit(limit_matrix):
     :return: 1d numpy array of the priority
     '''
     rval = limit_matrix.sum(axis=1)
-    n = len(rval)
-    rval /= n
+    adiv = sum(rval)
+    if adiv != 0:
+        rval /= adiv
     return rval
 
 def priority(matrix, limit_calc=calculus):
