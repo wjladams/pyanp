@@ -1,7 +1,7 @@
 
 from pyanp.pairwise import Pairwise
 from pyanp.prioritizer import Prioritizer, PriorityType
-from pyanp.general import islist, unwrap_list
+from pyanp.general import islist, unwrap_list, get_matrix
 from typing import Union
 import pandas as pd
 from copy import deepcopy
@@ -127,7 +127,8 @@ class ANPCluster:
         nodes = unwrap_list(nodes)
         if islist(nodes):
             for node in nodes:
-                self.add_node(node)
+                if isinstance(node, str):
+                    self.add_node(node)
         else:
             self.nodes[nodes] = ANPNode(self.network, self, nodes)
 
@@ -203,13 +204,14 @@ class ANPNetwork(Prioritizer):
     Represents an ANP prioritizer.  Has clusters/nodes, comparisons, etc.
     '''
 
-    def __init__(self):
+    def __init__(self, create_alts_cluster=True):
         '''
         Creates an empty ANP prioritizer
         '''
         self.clusters = {}
-        cl = self.add_cluster("Alternatives")
-        self.alts_cluster = cl
+        if create_alts_cluster:
+            cl = self.add_cluster("Alternatives")
+            self.alts_cluster = cl
         self.users=[]
         self.limitcalc = calculus
 
@@ -570,3 +572,32 @@ class ANPNetwork(Prioritizer):
         '''
         cl = self._get_cluster(new_cluster)
         self.alts_cluster = cl
+
+def anp_from_excel(excel_fname):
+    ## Structure first
+    df = pd.read_excel(excel_fname, sheet_name=0)
+    anp = ANPNetwork(create_alts_cluster=False)
+    for col in df:
+        if col.startswith("*"):
+            is_alt = True
+            cname = col[1:len(col)]
+        else:
+            is_alt = False
+            cname = col
+        anp.add_cluster(cname)
+        anp.add_node(cname, df[col])
+        if is_alt:
+            anp.set_alts_cluster(cname)
+    ## Now conneciton data
+    conn_mat = get_matrix(pd.read_excel(excel_fname, sheet_name=1))
+    #print(conn_mat)
+    #print(conn_mat.shape)
+    anp.node_connection_matrix(conn_mat)
+    ## Now pairwise data
+    df = pd.read_excel(excel_fname, sheet_name=2)
+    df = df.transpose()
+    #display(df)
+    for col in df:
+        #print(col)
+        anp.import_pw_series(df[col])
+    return anp
