@@ -132,3 +132,17 @@ class Prioritizer:
         :return: A list of the alts in this prioritizer object.
         '''
         raise ValueError("Should be overriden in subclass")
+
+    def data_names(self, append_to=None, post_pend="")->str:
+        '''
+        Return string of newline separated names for the data
+        that this prioritizer needs for each user.
+
+        :param append_to: If not none, elements are appended here, otherwise
+            a new list is created.
+
+        :param post_pend: A string to post_pend to each name
+
+        :return: List of strings of names.
+        '''
+        raise ValueError("Should be overriden in subclass")

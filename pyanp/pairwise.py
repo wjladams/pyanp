@@ -275,6 +275,24 @@ class Pairwise(Prioritizer):
         rval += tab+"</ul>"
         return rval
 
+    def data_names(self, append_to=None, post_pend=""):
+        '''
+        '''
+        alt_names = self.alt_names()
+        nalts = len(alt_names)
+        if append_to is None:
+            append_to = []
+        for alt1pos in range(nalts):
+            for alt2pos in range(alt1pos+1, nalts):
+                append_to.append(alt_names[alt1pos]+" vs "+alt_names[alt2pos]+" "+post_pend)
+        return append_to
+
+    def alt_names(self):
+        '''
+        :return: List of string alt names
+        '''
+        return deepcopy(self.alts)
+
 
 def add_place(mat):
     '''

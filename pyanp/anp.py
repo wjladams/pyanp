@@ -90,6 +90,16 @@ class ANPNode:
                 rval[alt] = val
         return rval
 
+    def data_names(self, append_to=None):
+        '''
+        :return: String of comparison name headers
+        '''
+        if append_to is None:
+            append_to = []
+        pri:Prioritizer
+        for pri in self.node_prioritizers.values():
+            pri.data_names(append_to, post_pend="wrt "+self.name)
+        return append_to
 
 class ANPCluster:
     '''
@@ -451,4 +461,43 @@ class ANPNetwork(Prioritizer):
         rval = gp[alt_names]
         if sum(rval) != 0:
             rval /= sum(rval)
+        return rval
+
+    def data_names(self):
+        '''
+        Returns the column headers needed to fill in the data for this model
+
+        :return: A list of strings that would be usable in excel for parsing
+            headers
+        '''
+        node:ANPNode
+        rval = []
+        for node in self.node_objs():
+            node.data_names(rval)
+        return rval
+
+    def node_connection_matrix(self, new_mat=None):
+        '''
+        Returns the current node conneciton matrix if new_mat is None
+        otherwise sets it.
+
+        :param new_mat:
+        :return:
+        '''
+        src_node:ANPNode
+        nnodes = self.nnodes()
+        nodes = self.node_objs()
+        node_names = self.node_names()
+        if new_mat is not None:
+            for src_node_pos in range(nnodes):
+                src_node = nodes[src_node_pos]
+                for dest_node_pos in range(nnodes):
+                    if new_mat[dest_node_pos, src_node_pos] == 1:
+                        src_node.node_connect(node_names[dest_node_pos])
+        rval = np.zeros([nnodes, nnodes])
+        for src_node_pos in range(nnodes):
+            src_node = nodes[src_node_pos]
+            for dest_node_pos in range(nnodes):
+                if src_node.is_node_node_connection(node_names[dest_node_pos]):
+                    rval[dest_node_pos, src_node_pos] = 1
         return rval

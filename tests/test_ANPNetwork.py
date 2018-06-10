@@ -50,3 +50,14 @@ class TestANPNetwork(TestCase):
         assert_allclose(should, gp)
         pri = net.priority(username=None)
         assert_allclose(pri, [1.0])
+        data_names = net.data_names()
+        should = ['n2 vs n1 wrt n1', 'n2 vs n3 wrt n1', 'n1 vs n3 wrt n1', 'n1 vs n2 wrt n2', 'n1 vs n3 wrt n2', 'n2 vs n3 wrt n2', 'n1 vs n2 wrt n3', 'n1 vs n3 wrt n3', 'n2 vs n3 wrt n3']
+        assert_array_equal(should, data_names)
+        mat= net.node_connection_matrix()
+        should = np.array([
+            [0., 1., 1., 1.],
+            [0., 1., 1., 1.],
+            [0., 1., 1., 1.],
+            [0., 1., 1., 1.]
+            ])
+        assert_allclose(should, mat)
