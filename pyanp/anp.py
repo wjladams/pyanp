@@ -9,6 +9,9 @@ from pyanp.limitmatrix import normalize, calculus, priority_from_limit
 import numpy as np
 import re
 
+from pyanp.rating import Rating
+
+
 class ANPNode:
     '''
     A node in an ANPCLuster, which is in an ANP model.
@@ -45,7 +48,7 @@ class ANPNode:
             prioritizer = self.get_node_prioritizer(dest_node, create=True)
             prioritizer.add_alt(dest_node, ignore_existing=True)
 
-    def get_node_prioritizer(self, dest_node, create=False)->Prioritizer:
+    def get_node_prioritizer(self, dest_node, create=False, create_class=Pairwise)->Prioritizer:
         '''
         Gets the node prioritizer for the other_node
 
@@ -57,7 +60,7 @@ class ANPNode:
         dest_name = dest_cluster.name
         if dest_name not in self.node_prioritizers:
             if create:
-                prioritizer = Pairwise()
+                prioritizer = create_class()
                 self.node_prioritizers[dest_name] = prioritizer
                 return prioritizer
             else:
@@ -101,6 +104,28 @@ class ANPNode:
         for pri in self.node_prioritizers.values():
             pri.data_names(append_to, post_pend="wrt "+self.name)
         return append_to
+
+    def set_node_prioritizer_type(self, destNode, prioritizer_class):
+        '''
+        Sets the node prioritizer type
+
+        :param destNode: An ANPNode object, string, or integer location
+
+        :param prioritizer_class: The new type
+
+        :return: None
+        '''
+        pri = self.get_node_prioritizer(destNode, create_class=prioritizer_class)
+        if not isinstance(pri, prioritizer_class):
+            #Wrong type, get alts from this one, and create correct one
+            rval = prioritizer_class()
+            rval.add_alt(pri.alt_names())
+            dest_cluster = self.network._get_node_cluster(destNode)
+            dest_name = dest_cluster.name
+            self.node_prioritizers[dest_name] = rval
+        else:
+            pass
+
 
 class ANPCluster:
     '''
@@ -573,6 +598,51 @@ class ANPNetwork(Prioritizer):
         cl = self._get_cluster(new_cluster)
         self.alts_cluster = cl
 
+    def import_rating_series(self, series:pd.Series):
+        '''
+        Takes in a well titled series of data, and pushes it into the right
+        node's prioritizer as ratings (or cluster).
+
+        :param series: The series of data for each user.  Index is usernames.
+            Values are the votes.
+
+        :return: Nothing
+        '''
+        name = series.name
+        name = clean_name(name)
+        info = name.split(' wrt ')
+        if len(info) < 2:
+            # We cannot do anything with this, we need a wrt
+            raise ValueError("No wrt in "+name)
+        wrt = info[1].strip()
+        dest = info[0].strip()
+        wrtNode:ANPNode
+        destNode:ANPNode
+        wrtNode = self._get_node(wrt)
+        destNode = self._get_node(dest)
+        npri:Rating
+        npri = wrtNode.get_node_prioritizer(destNode, create=True, create_class=Rating)
+        if not isinstance(npri, Rating):
+            wrtNode.set_node_prioritizer_type(destNode, Rating)
+            npri = wrtNode.get_node_prioritizer(destNode, create=True)
+        npri.vote_column(votes=series, alt_name=dest, createUnknownUsers=True)
+
+
+__PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
+
+def is_pw_col_name(col):
+    return __PW_COL_REGEX.search(col) is not None
+
+
+__RATING_COL_REGEX = re.compile('\\s+wrt\\s+')
+
+def is_rating_col_name(col):
+    if is_pw_col_name(col):
+        return False
+    else:
+        return __RATING_COL_REGEX.search(col) is not None
+
+
 def anp_from_excel(excel_fname):
     ## Structure first
     df = pd.read_excel(excel_fname, sheet_name=0)
@@ -598,6 +668,10 @@ def anp_from_excel(excel_fname):
     df = df.transpose()
     #display(df)
     for col in df:
-        #print(col)
-        anp.import_pw_series(df[col])
+        # print(col)
+        if is_pw_col_name(col):
+            anp.import_pw_series(df[col])
+        elif is_rating_col_name(col):
+            # print("Rating column "+col)
+            anp.import_rating_series(df[col])
     return anp

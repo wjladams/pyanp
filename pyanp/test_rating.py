@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from pyanp.rating import *
-
+from numpy.testing import assert_array_equal, assert_allclose
 class TestRating(TestCase):
 
     def test_crud(self):
@@ -13,5 +13,6 @@ class TestRating(TestCase):
         users=rating.add_user(unames)
         self.assertEqual(4, rating.nusers())
         rating.vote_column("a1", ["H", "M", "L", "M"])
+        rating.vote_column("a2", ["good", "good", "bad", "good"])
         ps = rating.priority()
-        print(ps)
+        assert_allclose([0.5, 0.625, 0.0], ps)

@@ -184,9 +184,14 @@ class Rating(Prioritizer):
         return list(self.df.columns)
 
 
-    def vote_column(self, alt_name, votes):
+    def vote_column(self, alt_name, votes, createUnknownUsers=True):
         if not self.is_alt(alt_name):
             raise ValueError("No such alternative "+alt_name)
+        if createUnknownUsers:
+            if isinstance(votes, pd.Series):
+                for uname in votes.keys():
+                    if not self.is_user(uname):
+                        self.add_user(uname)
         self.df[alt_name] = votes
 
     def priority(self, username=None, ptype:PriorityType=None):
@@ -195,7 +200,10 @@ class Rating(Prioritizer):
         for key, val in rval.iteritems():
             if np.isnan(val):
                 rval[key]=0
-        return rval
+        if ptype is None:
+            return rval
+        else:
+            return ptype.apply(rval)
 
     def vote_values(self, username=None, alt_name=None):
         if username is None:
@@ -216,3 +224,6 @@ class Rating(Prioritizer):
             for alt in self.alt_names():
                 rval[alt] = self.vote_values(username=username, alt_name=alt)
             return rval
+
+    def is_user(self, uname:str):
+        return uname in self.df.index
