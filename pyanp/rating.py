@@ -2,7 +2,7 @@
 Class for all rating related things.
 '''
 
-from pyanp.prioritizer import Prioritizer
+from pyanp.prioritizer import Prioritizer, PriorityType
 
 import re
 from enum import Enum
@@ -189,9 +189,21 @@ class Rating(Prioritizer):
             raise ValueError("No such alternative "+alt_name)
         self.df[alt_name] = votes
 
-    def vote_numbers(self, alt_name=None):
+    def priority(self, username=None, ptype:PriorityType=None):
+        values = self.vote_values(username=username)
+        rval = values.mean()
+        for key, val in rval.iteritems():
+            if np.isnan(val):
+                rval[key]=0
+        return rval
+
+    def vote_values(self, username=None, alt_name=None):
+        if username is None:
+            df = self.df
+        else:
+            df = self.df.loc[username,:]
         if alt_name is not None:
-            votes = self.df[alt_name]
+            votes = df[alt_name]
             weval = self.word_evals[alt_name]
             if weval is None:
                 weval = best_std_word_evaluator(votes, return_name=False)
@@ -202,5 +214,5 @@ class Rating(Prioritizer):
         else:
             rval = pd.DataFrame(index=self.user_names())
             for alt in self.alt_names():
-                rval[alt] = self.vote_numbers(alt)
+                rval[alt] = self.vote_values(username=username, alt_name=alt)
             return rval

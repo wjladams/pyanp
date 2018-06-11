@@ -13,5 +13,5 @@ class TestRating(TestCase):
         users=rating.add_user(unames)
         self.assertEqual(4, rating.nusers())
         rating.vote_column("a1", ["H", "M", "L", "M"])
-        c1 = rating.vote_numbers()
-        print(c1)
+        ps = rating.priority()
+        print(ps)
