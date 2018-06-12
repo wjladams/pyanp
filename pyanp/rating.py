@@ -138,7 +138,7 @@ class Rating(Prioritizer):
     '''
     def __init__(self):
         self.df = pd.DataFrame()
-        self.word_evals = {}
+        self.word_eval = None
 
     def is_alt(self, alt:str)->bool:
         return alt in self.df.columns
@@ -163,7 +163,6 @@ class Rating(Prioritizer):
                 raise ValueError("Already have an alt name "+alt_name)
         else:
             self.df[alt_name] = [None]*self.nusers()
-            self.word_evals[alt_name] = None
 
     def add_user(self, uname):
         if islist(uname):
@@ -212,7 +211,7 @@ class Rating(Prioritizer):
             df = self.df.loc[username,:]
         if alt_name is not None:
             votes = df[alt_name]
-            weval = self.word_evals[alt_name]
+            weval = self.word_eval
             if weval is None:
                 weval = best_std_word_evaluator(votes, return_name=False)
             if all([isinstance(vote, float) and np.isnan(vote) for vote in votes]):
