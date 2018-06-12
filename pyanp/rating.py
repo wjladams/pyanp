@@ -47,10 +47,17 @@ class WordEval:
         self.lookup_synonym = {}
         self.base = 0.9
         self.type = WordEvalType.LINEAR
+        self.values = {}
         for key, synonyms in vals.items():
             self.lookup_synonym[key] = key
             for synonym in synonyms:
-                self.lookup_synonym[synonym] = key
+                if isinstance(synonym, (float, int)):
+                    # You are telling us the value of this key, not a
+                    # a synonym
+                    self.values[key] = synonym
+                else:
+                    # This is actually a synonym
+                    self.lookup_synonym[synonym] = key
 
     def get_key(self, word):
         '''
@@ -115,6 +122,10 @@ class WordEval:
         key = self.get_key(word)
         if key is None:
             return None
+        if key in self.values:
+            # We have it manually set
+            return self.values[key]
+        # If we make it here, we have to work the other way round
         nitems = len(self.names_to_synonyms)
         if self.type is WordEvalType.LINEAR:
             index = self.keys.index(key)
@@ -371,3 +382,17 @@ class Rating(Prioritizer):
         :return: True/False if the given user exists in the system.
         '''
         return uname in self.df.index
+
+    def set_word_eval(self, param):
+        '''
+        Sets the WordEval object
+
+        :param param: This could either be a WordEval object, or a something
+            that WordEval(param) would work with
+
+        :return: None
+        '''
+        if param is None or isinstance(param, WordEval):
+            self.word_eval=param
+        else:
+            self.word_eval=WordEval(param)

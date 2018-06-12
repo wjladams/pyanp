@@ -627,6 +627,9 @@ class ANPNetwork(Prioritizer):
             npri = wrtNode.get_node_prioritizer(destNode, create=True)
         npri.vote_column(votes=series, alt_name=dest, createUnknownUsers=True)
 
+    def node_prioritizer(self, wrtnode, cluster):
+        node = self._get_node(wrtnode)
+        return node.node_prioritizers[cluster]
 
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 
@@ -641,6 +644,33 @@ def is_rating_col_name(col):
         return False
     else:
         return __RATING_COL_REGEX.search(col) is not None
+
+
+def anp_manual_scales_from_excel(anp:ANPNetwork, excel_fname):
+    xl = pd.ExcelFile(excel_fname)
+    if "scales" not in xl.sheet_names:
+        # We have no scales, do nothing
+        return
+    # Scales exist, read in
+    df = xl.parse(sheet_name="scales")
+    for scale_info in df:
+        # See if it has a wrt and whatnot
+        pieces = scale_info.split(" wrt ")
+        if len(pieces) == 2:
+            # Found one
+            cluster = pieces[0].strip()
+            wrtnode = pieces[1].strip()
+            scale_data = {}
+            for item in df[scale_info]:
+                name, val = str(item).split("=")
+                name = name.lower().strip()
+                val = float(val)
+                scale_data[name]=[val]
+            rating:Rating
+            rating = anp.node_prioritizer(wrtnode, cluster)
+            #print(scale_data)
+            rating.set_word_eval(scale_data)
+    # We are done!
 
 
 def anp_from_excel(excel_fname):
@@ -674,4 +704,6 @@ def anp_from_excel(excel_fname):
         elif is_rating_col_name(col):
             # print("Rating column "+col)
             anp.import_rating_series(df[col])
+    # Now let's setup manual rating scales
+    anp_manual_scales_from_excel(anp, excel_fname)
     return anp
