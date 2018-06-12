@@ -14,3 +14,4 @@ Programmers Reference PyANP
    direct
    prioritizer
    rowsens
+   rating
