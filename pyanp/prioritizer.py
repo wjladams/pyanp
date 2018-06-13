@@ -104,7 +104,7 @@ class Prioritizer:
         :return: The number of alternatives (things you are pairwise comparing)
             in this group pairwise comparison object.
         '''
-        raise ValueError("Should be overrriden in subclass")
+        return len(self.alt_names())
 
     def add_user(self, uname):
         '''

@@ -4,6 +4,9 @@ from pyanp.anp import ANPNetwork
 import numpy as np
 from  numpy.testing import assert_array_equal, assert_allclose
 
+from pyanp.pairwise import Pairwise
+
+
 class TestANPNetwork(TestCase):
 
 
@@ -61,3 +64,65 @@ class TestANPNetwork(TestCase):
             [0., 1., 1., 1.]
             ])
         assert_allclose(should, mat)
+
+    def random_pw_matrix(self, size=3):
+        rval = np.identity(size)
+        for row in range(size):
+            for col in range(row+1, size):
+                vote = np.random.randint(1, 10)
+                if np.random.random() < 0.5:
+                    vote = 1/vote
+                rval[row, col]=vote
+                rval[col, row]=1/vote
+        return rval
+
+
+    def random_network(self, seed=None, rval=None, maxclusters=10, maxnodes=10,
+                       nodeClusterConnectProb=0.75, nusers=2)->ANPNetwork:
+        if seed is not None:
+            np.random.seed(seed)
+        if rval is None:
+            rval = ANPNetwork(create_alts_cluster=False)
+        usernames = ["User "+str(i) for i in range(nusers)]
+        rval.add_user(usernames)
+        nclusters = np.random.randint(2, maxclusters+1)
+        for clusterp in range(nclusters):
+            cluster = "Cluster "+str(clusterp)
+            rval.add_cluster(cluster)
+            nnodes = np.random.randint(2, maxnodes+1)
+            for nodep in range(nnodes):
+                node = "Node "+str(clusterp)+"x"+str(nodep)
+                rval.add_node(cluster, node)
+        rval.set_alts_cluster(0)
+        #Now do connections
+        clusters = rval.cluster_names()
+        nodes = rval.node_names()
+        for wrtnode in nodes:
+            for cluster in clusters:
+                if np.random.random() < nodeClusterConnectProb:
+                    #Okay we should do this connection
+                    for destnode in rval.node_names(cluster):
+                        rval.node_connect(wrtnode, destnode)
+                    # Alright we have the connections, let's pairwise for each
+                    # user
+                    pw:Pairwise = rval.node_prioritizer(wrtnode, cluster)
+                    nnodes = rval.nnodes(cluster)
+                    for username in usernames:
+                        mat = self.random_pw_matrix(size=nnodes)
+                        pw.vote_matrix(username, mat)
+        return rval
+
+    def test_subnetwork_random(self):
+        net = ANPNetwork(create_alts_cluster=False)
+        net.add_cluster("goal")
+        net.add_node("goal", ["n1", "n2"])
+        subnet1 = net.subnet("n1")
+        subnet2 = net.subnet("n2")
+        np.random.seed(0)
+        self.random_network(rval=subnet1)
+        np.random.seed(1)
+        self.random_network(rval=subnet2)
+        self.assertEqual(2, subnet1.nalts())
+        self.assertEqual(10, net.nalts())
+        pris = net.priority()
+        print(pris)

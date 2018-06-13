@@ -21,6 +21,8 @@ class ANPNode:
         self.cluster = cluster
         self.network = network
         self.node_prioritizers = {}
+        self.subnetwork = None
+        self.invert = False
 
     def is_node_cluster_connection(self, dest_cluster:str)->bool:
         '''
@@ -223,6 +225,23 @@ def clean_name(name:str)->str:
     rval = name.strip()
     return __CLEAN_SPACES_RE.sub(string=rval, repl=' ')
 
+def sum_subnetwork_formula(list_of_series_vals):
+    rval = pd.Series()
+    counts = pd.Series(dtype=int)
+    for vals in list_of_series_vals:
+        for alt_name, val in vals.iteritems():
+            if alt_name in rval:
+                rval[alt_name] += val
+                counts[alt_name] += 1
+            else:
+                rval[alt_name] = val
+                counts[alt_name] = 1
+    # Now let's calculate the averages
+    for alt_name, val in rval.iteritems():
+        if counts[alt_name] > 1:
+            rval[alt_name] /= counts[alt_name]
+    return rval
+
 
 class ANPNetwork(Prioritizer):
     '''
@@ -239,6 +258,8 @@ class ANPNetwork(Prioritizer):
             self.alts_cluster = cl
         self.users=[]
         self.limitcalc = calculus
+        self.subnet_formula = sum_subnetwork_formula
+        self.default_priority_type = None
 
     def add_cluster(self, *args)->ANPCluster:
         '''
@@ -259,6 +280,12 @@ class ANPNetwork(Prioritizer):
             cl = ANPCluster(self, clusters)
             self.clusters[clusters] = cl
             return cl
+
+    def cluster_names(self):
+        '''
+        :return: List of string names of the clusters
+        '''
+        return list(self.clusters.keys())
 
     def nclusters(self)->int:
         '''
@@ -342,6 +369,10 @@ class ANPNetwork(Prioritizer):
 
         :return: Nothing
         '''
+        if islist(uname):
+            for un in uname:
+                self.add_user(un)
+            return
         if self.is_user(uname):
             raise ValueError("User by the name "+uname+" already existed")
         self.users.append(uname)
@@ -410,12 +441,18 @@ class ANPNetwork(Prioritizer):
         src = self._get_node(src_node)
         src.node_connect(dest_node)
 
-    def node_names(self)->list:
+    def node_names(self, cluster=None)->list:
         '''
         Returns a list of nodes in this network, organized by cluster
 
+        :param cluster: If None, we get all nodes in network, else we get nodes
+            in that cluster
+
         :return: List of strs of node names
         '''
+        if cluster is not None:
+            cl = self._get_cluster(cluster)
+            return cl.node_names()
         rval = []
         cl:ANPCluster
         for cl in self.clusters.values():
@@ -497,7 +534,19 @@ class ANPNetwork(Prioritizer):
         '''
         :return: List of alt names in this ANP model
         '''
-        return self.alts_cluster.node_names()
+        if self.has_subnetwork():
+            # We have some v1 subnetworks, we get alternative names by looking
+            # there.
+            rval = []
+            node: ANPNode
+            for node in self.node_objs_with_subnet():
+                alts = node.subnetwork.alt_names()
+                for alt in alts:
+                    if alt not in rval:
+                        rval.append(alt)
+            return rval
+        else:
+            return self.alts_cluster.node_names()
 
     def priority(self, username=None, ptype:PriorityType=None):
         '''
@@ -509,12 +558,22 @@ class ANPNetwork(Prioritizer):
 
         :return: A pandas.Series indexed on alt names, values are the score
         '''
-        gp = self.global_priorities(username)
-        alt_names = self.alt_names()
-        rval = gp[alt_names]
-        if sum(rval) != 0:
-            rval /= sum(rval)
-        return rval
+        if ptype is None:
+            # Use the default priority type for this network
+            ptype = self.default_priority_type
+
+        if self.has_subnet():
+            # Need to synthesize using subnetworks
+            return self.subnet_synthesize(username=username, ptype=ptype)
+        else:
+            gp = self.global_priorities(username)
+            alt_names = self.alt_names()
+            rval = gp[alt_names]
+            if sum(rval) != 0:
+                rval /= sum(rval)
+            if ptype is not None:
+                rval = ptype.apply(rval)
+            return rval
 
     def data_names(self):
         '''
@@ -630,6 +689,89 @@ class ANPNetwork(Prioritizer):
     def node_prioritizer(self, wrtnode, cluster):
         node = self._get_node(wrtnode)
         return node.node_prioritizers[cluster]
+
+    def subnet(self, wrtnode):
+        '''
+        Makes wrtnode have a subnetwork if it did not already.
+
+        :param wrtnode: The node to give a subnetwork to, or get the subnetwork
+            of.
+        :return: The ANPNetwork that is the subnet of this node
+        '''
+        node = self._get_node(wrtnode)
+        if node.subnetwork is not None:
+            return node.subnetwork
+        else:
+            rval = ANPNetwork(create_alts_cluster=False)
+            node.subnetwork = rval
+            rval.default_priority_type = PriorityType.IDEALIZE
+            return rval
+
+    def node_invert(self, node, value=None):
+        '''
+        Either sets, or tells if a node is inverted
+
+        :param node: The node to do this on
+
+        :param value: If None, we return the boolean about if this node is
+            inverted.  Otherwise specifies the new value.
+
+        :return: T/F if value=None, telling if the node is inverted.  Otherwise
+            returns nothing.
+        '''
+        node = self._get_node(node)
+        if value is None:
+            return node.invert
+        else:
+            node.invert = value
+
+    def has_subnet(self)->bool:
+        '''
+        :return: True/False telling if some node had a subentwork
+        '''
+        for node in self.node_objs():
+            if node.subnetwork is not None:
+                return True
+        return False
+
+    def subnet_synthesize(self, username=None, ptype:PriorityType=None):
+        '''
+        Does the standard V1 subnetowrk synthesis.
+
+        :return: Nohting
+        '''
+        # First we need our global priorities
+        pris = self.global_priorities(username)
+        # Next we need the alternative priorities from each subnetwork
+        subnets = []
+        node:ANPNode
+        for node in self.node_objs_with_subnet():
+            p = node.subnetwork.priority(username, ptype)
+            if node.invert:
+                p = self.invert_priority(p)
+            subnets.append(p)
+        rval = self.synthesize_combine(subnets)
+        if ptype is not None:
+            rval = ptype.apply(rval)
+        return rval
+
+    def node_objs_with_subnet(self):
+        return [node for node in self.node_objs() if node.subnetwork is not None]
+
+    def has_subnetwork(self):
+        for node in self.node_objs():
+            if node.subnetwork is not None:
+                return True
+        return False
+
+    def invert_priority(self, p):
+        rval = deepcopy(p)
+        for i in range(len(p)):
+            rval[i] = 1 - rval[i]
+        return rval
+
+    def synthesize_combine(self, subnets):
+        return self.subnet_formula(subnets)
 
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 

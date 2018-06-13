@@ -207,6 +207,17 @@ class Pairwise(Prioritizer):
         for uname, val in votes.iteritems():
             self.vote(uname, row, col, val, createUnknownUser=createUnknownUser)
 
+    def vote_matrix(self, user_name:str, val=np.ndarray, createUnknownUser:bool=True):
+        '''
+        Sets the vote matrix for a user
+
+        :param user_name:
+        :param val:
+        :return:
+        '''
+        mat = self.matrix(user_name, createUnknownUser=createUnknownUser)
+        mat[:,:] = val
+
     def vote(self, user_name:str, row, col, val:float=0, createUnknownUser:bool=True)->None:
         '''
         Changes a single pairwise value for a single user.
