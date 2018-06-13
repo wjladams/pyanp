@@ -207,6 +207,25 @@ class ANPCluster:
             dest_cluster_name = dest_cluster
         self.prioritizer.add_alt(dest_cluster_name, ignore_existing=True)
 
+    def set_prioritizer_type(self, prioritizer_class):
+        '''
+        Sets the node prioritizer type
+
+        :param destNode: An ANPNode object, string, or integer location
+
+        :param prioritizer_class: The new type
+
+        :return: None
+        '''
+        pri = self.prioritizer
+        if not isinstance(pri, prioritizer_class):
+            #Wrong type, get alts from this one, and create correct one
+            rval = prioritizer_class()
+            rval.add_alt(pri.alt_names())
+            self.prioritizer = rval
+        else:
+            pass
+
 
 def get_item(tbl:dict, index:int):
     if index < 0:
@@ -733,11 +752,26 @@ class ANPNetwork(Prioritizer):
         wrtNode = self._get_node(wrt)
         destNode = self._get_node(dest)
         npri:Rating
-        npri = wrtNode.get_node_prioritizer(destNode, create=True, create_class=Rating)
-        if not isinstance(npri, Rating):
-            wrtNode.set_node_prioritizer_type(destNode, Rating)
-            npri = wrtNode.get_node_prioritizer(destNode, create=True)
-        npri.vote_column(votes=series, alt_name=dest, createUnknownUsers=True)
+        if (wrtNode is not None) and (destNode is not None):
+            # Node ratings
+            npri = wrtNode.get_node_prioritizer(destNode, create=True, create_class=Rating)
+            if not isinstance(npri, Rating):
+                wrtNode.set_node_prioritizer_type(destNode, Rating)
+                npri = wrtNode.get_node_prioritizer(destNode, create=True)
+            npri.vote_column(votes=series, alt_name=dest, createUnknownUsers=True)
+        else:
+            # Trying cluster ratings
+            wrtcluster = self._get_cluster(wrt)
+            destcluster = self._get_cluster(dest)
+            if wrtcluster is None:
+                raise ValueError("Ratings: wrt is not a cluster wrt="+wrt+" and wasn't a node either")
+            if destcluster is None:
+                raise ValueError("Ratings: dest is not a cluster dest="+dest+" and wasn't a node either")
+            npri = wrtcluster.prioritizer
+            if not isinstance(npri, Rating):
+                wrtcluster.set_prioritizer_type(Rating)
+                npri = wrtcluster.prioritizer
+            npri.vote_column(votes=series, alt_name=dest, createUnknownUsers=True)
 
     def node_prioritizer(self, wrtnode, cluster):
         node = self._get_node(wrtnode)
