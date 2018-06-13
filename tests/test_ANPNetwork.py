@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pyanp.anp import ANPNetwork
+from pyanp.anp import ANPNetwork, anp_from_excel
 import numpy as np
 from  numpy.testing import assert_array_equal, assert_allclose
 
@@ -111,6 +111,11 @@ class TestANPNetwork(TestCase):
                         mat = self.random_pw_matrix(size=nnodes)
                         pw.vote_matrix(username, mat)
         return rval
+
+    def test_read_cluster_cmp(self):
+        anp = anp_from_excel("data/anp_data_cluster_cmps.xlsx")
+        print(anp.nalts())
+        print(anp.scaled_supermatrix())
 
     def test_subnetwork_random(self):
         net = ANPNetwork(create_alts_cluster=False)

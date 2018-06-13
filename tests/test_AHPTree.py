@@ -35,7 +35,7 @@ class TestAHPTree(TestCase):
         print(rval)
 
     def test_read(self):
-        fname = "AHPTreeData.xlsx"
+        fname = "data/AHPTreeData.xlsx"
         tree = ahptree_fromdf(fname)
         nodes = ['Goal', 'A1', 'A2', 'A3', 'A', 'B', 'B1', 'B2', 'C', 'C1', 'C2']
         alts = ['Alt1', "Alt2", "Alt3"]

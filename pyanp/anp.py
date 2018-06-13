@@ -49,6 +49,10 @@ class ANPNode:
         else:
             prioritizer = self.get_node_prioritizer(dest_node, create=True)
             prioritizer.add_alt(dest_node, ignore_existing=True)
+            #Make sure parent clusters are connected
+            src_cluster = self.cluster
+            dest_cluster = self.network._get_node_cluster(dest_node)
+            src_cluster.cluster_connect(dest_cluster)
 
     def get_node_prioritizer(self, dest_node, create=False, create_class=Pairwise)->Prioritizer:
         '''
@@ -139,6 +143,7 @@ class ANPCluster:
 
         :param name:
         '''
+        self.prioritizer = Pairwise()
         self.name = name
         self.network = network
         # The list of ANP nodes in this cluster
@@ -194,6 +199,14 @@ class ANPCluster:
 
     def node_objs(self):
         return self.nodes.values()
+
+    def cluster_connect(self, dest_cluster):
+        if isinstance(dest_cluster, ANPCluster):
+            dest_cluster_name = dest_cluster.name
+        else:
+            dest_cluster_name = dest_cluster
+        self.prioritizer.add_alt(dest_cluster_name, ignore_existing=True)
+
 
 def get_item(tbl:dict, index:int):
     if index < 0:
@@ -445,6 +458,7 @@ class ANPNetwork(Prioritizer):
         src = self._get_node(src_node)
         src.node_connect(dest_node)
 
+
     def node_names(self, cluster=None)->list:
         '''
         Returns a list of nodes in this network, organized by cluster
@@ -479,8 +493,8 @@ class ANPNetwork(Prioritizer):
                 rval.append(name)
         return rval
 
-    def clusters(self)->list:
-        return self.clusters.values()
+    def cluster_objs(self)->list:
+        return list(self.clusters.values())
 
     def node_connections(self):
         nnodes = self.nnodes()
@@ -515,6 +529,28 @@ class ANPNetwork(Prioritizer):
         :return: The scaled supermatrix
         '''
         rval = self.unscaled_supermatrix(username)
+        # Now I need to normalized by cluster weights
+        clusters = self.cluster_objs()
+        nclusters = len(clusters)
+        col = 0
+        for col_cp in range(nclusters):
+            col_cluster:ANPCluster = clusters[col_cp]
+            row_nnodes = col_cluster.nnodes()
+            cluster_pris = col_cluster.prioritizer.priority(username, PriorityType.NORMALIZE)
+            row_offset = 0
+            for col_node in col_cluster.node_objs():
+                row=0
+                for row_cp in range(nclusters):
+                    row_cluster:ANPCluster = clusters[row_cp]
+                    row_cluster_name = row_cluster.name
+                    if row_cluster_name in cluster_pris:
+                        priority = cluster_pris[row_cluster_name]
+                    else:
+                        priority = 0
+                    for row_node in row_cluster.node_objs():
+                        rval[row, col] *= priority
+                        row += 1
+                col += 1
         normalize(rval, inplace=True)
         return rval
 
@@ -643,13 +679,26 @@ class ANPNetwork(Prioritizer):
         row, col = info
         rowNode = self._get_node(row)
         colNode = self._get_node(col)
-        if rowNode.cluster.name != colNode.cluster.name:
-            raise ValueError(" comparing nodes not exiting in same cluster")
-        npri:Pairwise
-        npri = wrtNode.get_node_prioritizer(rowNode, create=True)
-        if not isinstance(npri, Pairwise):
-            raise ValueError("Node prioritizer was not pairwise")
-        npri.vote_series(series, row, col, createUnknownUser=True)
+        npri: Pairwise
+        if (wrtNode is not None) and (rowNode is not None) and (colNode is not None):
+            # Node pairwise
+            npri = wrtNode.get_node_prioritizer(rowNode, create=True)
+            if not isinstance(npri, Pairwise):
+                raise ValueError("Node prioritizer was not pairwise")
+            npri.vote_series(series, row, col, createUnknownUser=True)
+        else:
+            # Try cluster pairwise
+            wrtcluster = self._get_cluster(wrt)
+            rowcluster = self._get_cluster(row)
+            colcluster = self._get_cluster(col)
+            if wrtcluster is None:
+                raise ValueError("wrt="+wrt+" was not a cluster, and the group was not a node comparison")
+            if rowcluster is None:
+                raise ValueError("row="+row+" was not a cluster, and the group was not a node comparison")
+            if colcluster is None:
+                raise ValueError("col="+col+" was not a cluster, and the group was not a node comparison")
+            npri = self.get_cluster_prioritizer(wrtcluster)
+            npri.vote_series(series, row, col, createUnknownUser=True)
 
     def set_alts_cluster(self, new_cluster):
         '''
@@ -776,6 +825,11 @@ class ANPNetwork(Prioritizer):
 
     def synthesize_combine(self, priorities:pd.Series, alt_scores:dict):
         return self.subnet_formula(priorities, alt_scores)
+
+    def get_cluster_prioritizer(self, wrtcluster):
+        cluster = self._get_cluster(wrtcluster)
+        return cluster.prioritizer
+
 
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 

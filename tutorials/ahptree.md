@@ -67,4 +67,4 @@ allincons
 ## 4. Resources for this tutorial
 
 * [Jupyter Notebook for this tutorial](../examples/AHPTreeEx1.ipynb)
-* [Excel file used](../tests/AHPTreeData.xlsx)
+* [Excel file used](../tests/data/AHPTreeData.xlsx)
