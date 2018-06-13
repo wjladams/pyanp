@@ -124,5 +124,7 @@ class TestANPNetwork(TestCase):
         self.random_network(rval=subnet2)
         self.assertEqual(2, subnet1.nalts())
         self.assertEqual(10, net.nalts())
+        print("before priorities")
         pris = net.priority()
+        print("after priorities")
         print(pris)

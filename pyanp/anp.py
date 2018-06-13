@@ -225,20 +225,24 @@ def clean_name(name:str)->str:
     rval = name.strip()
     return __CLEAN_SPACES_RE.sub(string=rval, repl=' ')
 
-def sum_subnetwork_formula(list_of_series_vals):
+def sum_subnetwork_formula(priorities:pd.Series, dict_of_series:dict):
+    subpriorities = priorities[dict_of_series.keys()]
+    if sum(subpriorities) != 0:
+        subpriorities /= sum(subpriorities)
     rval = pd.Series()
     counts = pd.Series(dtype=int)
-    for vals in list_of_series_vals:
+    for subnet_name, vals in dict_of_series.items():
+        priority = subpriorities[subnet_name]
         for alt_name, val in vals.iteritems():
             if alt_name in rval:
-                rval[alt_name] += val
-                counts[alt_name] += 1
+                rval[alt_name] += val * priority
+                counts[alt_name] += priority
             else:
                 rval[alt_name] = val
-                counts[alt_name] = 1
+                counts[alt_name] = priority
     # Now let's calculate the averages
     for alt_name, val in rval.iteritems():
-        if counts[alt_name] > 1:
+        if counts[alt_name] > 0:
             rval[alt_name] /= counts[alt_name]
     return rval
 
@@ -743,14 +747,14 @@ class ANPNetwork(Prioritizer):
         # First we need our global priorities
         pris = self.global_priorities(username)
         # Next we need the alternative priorities from each subnetwork
-        subnets = []
+        subnets = {}
         node:ANPNode
         for node in self.node_objs_with_subnet():
             p = node.subnetwork.priority(username, ptype)
             if node.invert:
                 p = self.invert_priority(p)
-            subnets.append(p)
-        rval = self.synthesize_combine(subnets)
+            subnets[node.name]=p
+        rval = self.synthesize_combine(pris, subnets)
         if ptype is not None:
             rval = ptype.apply(rval)
         return rval
@@ -770,8 +774,8 @@ class ANPNetwork(Prioritizer):
             rval[i] = 1 - rval[i]
         return rval
 
-    def synthesize_combine(self, subnets):
-        return self.subnet_formula(subnets)
+    def synthesize_combine(self, priorities:pd.Series, alt_scores:dict):
+        return self.subnet_formula(priorities, alt_scores)
 
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 
