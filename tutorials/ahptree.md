@@ -1,4 +1,4 @@
-# Tutorial on AHP usage in pyanp
+# AHP Tree usage in pyanp
 In this tutorial we will:
 
 1. Show you how to import the AHPTree class (which is what handles all AHP tree calculations)
