@@ -18,9 +18,9 @@ class TestANPNetwork(TestCase):
         self.assertEqual(4, net.nclusters())
         nodes = ["n1", "n2", "n3"]
         net.add_node(cl1, nodes)
-        self.assertIsNotNone(net._get_node("n1"))
-        self.assertIsNotNone(net._get_node(2))
-        self.assertIsNone(net._get_node(3))
+        self.assertIsNotNone(net.node_obj("n1"))
+        self.assertIsNotNone(net.node_obj(2))
+        self.assertIsNone(net.node_obj(3))
         print(net.nnodes())
         net.add_alt("alt1")
         self.assertTrue(net.is_alt("alt1"))

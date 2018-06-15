@@ -15,3 +15,4 @@ Programmers Reference PyANP
    prioritizer
    rowsens
    rating
+   anp

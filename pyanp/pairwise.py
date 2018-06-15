@@ -156,10 +156,10 @@ class Pairwise(Prioritizer):
         a user or group of users.
 
         :param user_name: The name/names of the users to get the inconsistency
-        of.  If None, we get the inconsistency of the group average matrix.  If
-        it is a string, we get the inconsistency of that user.  If it is a list
-        of users, we get the inconsistency of the group average for that list of
-        users.
+            of.  If None, we get the inconsistency of the group average matrix.  If
+            it is a string, we get the inconsistency of that user.  If it is a list
+            of users, we get the inconsistency of the group average for that list of
+            users.
 
         :return: The Saaty inconsistency score.
         '''
@@ -283,10 +283,10 @@ class Pairwise(Prioritizer):
         Calculates the resulting priority for the given user / users.
 
         :param user_name: The name/names of the users to calculate the priority
-        of.  If None, we get the priority of the group average matrix.  If
-        it is a string, we get the priority of that user.  If it is a list
-        of users, we get the priority of the group average for that list of
-        users.
+            of.  If None, we get the priority of the group average matrix.  If
+            it is a string, we get the priority of that user.  If it is a list
+            of users, we get the priority of the group average for that list of
+            users.
 
         :param ptype: How should we normalize the resulting priorities
             (if at all).
