@@ -1,4 +1,12 @@
-# AHP Tree usage in pyanp
+# AHP Trees
+An AHP Tree, or *Simple AHP Hierarchy* is a tree of criteria, with alternatives at the bottom.  An example
+looks like:
+
+![AHP Tree Image](https://upload.wikimedia.org/wikipedia/commons/5/52/AHPHierarchy3.0.png)
+
+In `pyanp` we work on such structures with the `pyanp.ahptree` module.
+
+## AHP Tree usage in pyanp
 In this tutorial we will:
 
 1. Show you how to import the AHPTree class (which is what handles all AHP tree calculations)
