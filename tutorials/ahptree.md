@@ -2,7 +2,7 @@
 An AHP Tree, or *Simple AHP Hierarchy* is a tree of criteria, with alternatives at the bottom.  An example
 looks like:
 
-![AHP Tree Image](https://upload.wikimedia.org/wikipedia/commons/5/52/AHPHierarchy3.0.png)
+![AHP Tree Image](imgs/AHPHierarchy3.0.png)
 
 In `pyanp` we work on such structures with the `pyanp.ahptree` module.
 
