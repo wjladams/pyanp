@@ -131,22 +131,18 @@ def pri_eigen(mat:np.ndarray, error:float = 1e-10, use_harker:bool = False,
     :return numpy.array: The largest eigenvector that is the normalized (sum to 1) largest eigenvector as a numpy.array
         of shape [size] if return_eigenval=False, otherwise returns the eigenvalue as a number.
     '''
-    if (mat is None or mat.shape == []) or \
-            (mat.shape==(0)) or \
-            (mat.shape==(0,0)):
-        print("Empty matrix!")
-        # Eigen vector of the None matrix is []
+    if mat is None or mat.shape==(0,0):
+        # Eigen vector of the empty matrix is []
         return np.array([])
     if use_harker:
         mat = harker_fix(mat)
     size = mat.shape[0]
+    #Create our return value
     vec = np.ones([size])
     diff = 1
     while diff > error:
         nextv = np.matmul(mat, vec)
         nextv = nextv/sum(nextv)
-        if len(nextv) == 0:
-            raise ValueError("I hate empty matrices that should not exist.")
         diff = max(abs(nextv - vec))
         vec = nextv
     if return_eigenval:
