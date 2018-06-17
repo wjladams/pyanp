@@ -121,10 +121,7 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
         if np.max(abs(start)) == 0:
             # It truly was a hieratchy, do that
             return hiearhcy_formula(mat)
-        else:
-            # Not really a hierarchy, but we have adapted start_pow for this
-            # case, so I will continue
-            pass
+    # Temporary storage matrices
     tmp1 = deepcopy(mat)
     tmp2 = deepcopy(mat)
     tmp3 = deepcopy(mat)
@@ -134,7 +131,6 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
         # Add next one
         pows.append(np.matmul(mat, pows[-1]))
         diff = normalize_cols_dist(pows[-1], pows[-2], tmp1, tmp2, tmp3, col_scale_type)
-        # print(diff)
         if diff < error:
             # Already converged, done
             mysum = pows[-1].sum(axis=0)
@@ -142,28 +138,23 @@ def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_s
                 if mysum[i]==0:
                     mysum[i]=1
             return pows[-1] / mysum
-    # print(pows)
     for count in range(max_iters):
         nextp = pows[0]
         np.matmul(pows[-1], mat, nextp)
-        # print(pows)
         for i in range(len(pows) - 1):
             pows[i] = pows[i + 1]
         pows[-1] = nextp
-        # print(pows)
         # Check convergence
         for i in range(len(pows) - 1):
             diff = normalize_cols_dist(pows[i], nextp, tmp1, tmp2, tmp3, col_scale_type)
-            # print(pows[i])
-            # print(nextp)
-            # print(diff)
             if diff < error:
                 mysum = nextp.sum(axis=0)
                 for i in range(len(mysum)):
                     if mysum[i] == 0:
                         mysum[i] = 1
                 return nextp / mysum
-
+    # If we make it here, we never converged
+    raise ValueError("Did not converge within "+str(max_iters)+" iterations")
 
 def normalize_cols_dist(mat1, mat2, tmp1=None, tmp2=None, tmp3=None, col_scale_type=None):
     '''
