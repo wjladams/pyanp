@@ -1,4 +1,4 @@
-# `pyanp` Tutorials
+# PYANP Tutorials
 
 * [Installing `pyanp` and Jupyter/Python](install.md)
 * [AHP Tree Tutorial](tutorials/ahptree.md)
