@@ -91,7 +91,7 @@ def hiearhcy_formula(mat):
     rval = normalize(summ)
     return rval
 
-def calculus(mat, error=1e-10, max_iters=1000, use_hierarchy_formula=True, col_scale_type=None):
+def calculus(mat, error=1e-10, max_iters=5000, use_hierarchy_formula=True, col_scale_type=None):
     '''
     Calculates the 'Calculus Type' limit matrix from superdecisions
 

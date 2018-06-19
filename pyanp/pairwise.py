@@ -7,7 +7,7 @@ in addition to inconsistency calculations.
 import numpy as np
 import pandas as pd
 from pyanp.priority import incon_std
-from pyanp.general import islist
+from pyanp.general import islist, matrix_as_df
 from pyanp.prioritizer import Prioritizer, PriorityType
 from pyanp.priority import pri_eigen
 from copy import deepcopy
@@ -115,7 +115,7 @@ class Pairwise(Prioritizer):
             self.df.loc[user, "Matrix"] = add_place(mat)
 
 
-    def matrix(self, user_name=None, createUnknownUser:bool=True)->np.ndarray:
+    def matrix(self, user_name=None, createUnknownUser:bool=True, as_df=False)->np.ndarray:
         '''
         Gets the pairwise comparison for a user or group of users.
 
@@ -129,7 +129,11 @@ class Pairwise(Prioritizer):
             should create that user.  Otherwise throw an error if we request
             for a non-existant user.
 
-        :return: The numpy array of the pairwise comparisons.
+        :param as_df: If True return as pandas.DataFrame with index/column names
+            as the alt names, otherwise return numpy.ndarray
+
+        :return: The numpy array of the pairwise comparisons, or DataFrame if
+            as_df is True
 
         :raises ValueError: If createUnknownUser=False and we request for a single
             non-existant user.
@@ -143,12 +147,16 @@ class Pairwise(Prioritizer):
                     self.add_user(user_name)
                 else:
                     raise ValueError("No such user " + user_name)
-            return self.df.loc[user_name, "Matrix"]
+            rval = self.df.loc[user_name, "Matrix"]
         else:
             mats = [self.df.loc[user, 'Matrix'] for user in user_name]
             if len(mats) == 0:
                 return np.identity(self.nalts(), dtype=float)
-            return geom_avg_mats(mats)
+            rval = geom_avg_mats(mats)
+        if as_df:
+            return matrix_as_df(rval, self.alt_names())
+        else:
+            return rval
 
     def incon_std(self, user_name)->float:
         '''

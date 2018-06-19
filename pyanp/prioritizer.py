@@ -146,3 +146,25 @@ class Prioritizer:
         :return: List of strings of names.
         '''
         raise ValueError("Should be overriden in subclass")
+
+    def priority_df(self, user_infos=None)->pandas.DataFrame:
+        """
+        Returns the priority scores dataframe for all users and the group
+
+        :param user_infos: A list of users to do this for, if None is a part
+            of this list, it means group average.  If None, it defaults to
+            None plus all users.
+
+        :return: pandas.DataFrame rows are alternatives, cols are users.
+        """
+        if user_infos is None:
+            user_infos = list(self.user_names())
+            user_infos.insert(0, None)
+        rval = pandas.DataFrame()
+        for user in user_infos:
+            if user is None:
+                uname = "Group Average"
+            else:
+                uname = user
+            rval[uname] = self.priority(user)
+        return rval

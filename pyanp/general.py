@@ -51,13 +51,15 @@ def index_is_numeric(series:pd.Series)->bool:
     dtype = str(series.dtype)
     return dtype.startswith("float")  or dtype.startswith("int")
 
-def get_matrix(fname_or_df)->np.ndarray:
+def get_matrix(fname_or_df, sheet=0)->np.ndarray:
     '''
     Returns a dataframe from a csv/excel filename (or simply returns the
     dataframe if it is passed as input
 
     :param fname_or_df: The file name to get as a dataframe, or a dataframe
     (in which case that param is returned)
+
+    :param sheet: If it is a filename, which sheet to use
 
     :return: The dataframe
     '''
@@ -76,14 +78,14 @@ def get_matrix(fname_or_df)->np.ndarray:
             #Now we know
             rval = pd.read_csv(fname_or_df, index_col=indexcol, header=header)
         elif fname.endswith(".xls") or fname.endswith(".xlsx"):
-            rval = pd.read_excel(fname_or_df, index_col=None, header=None)
+            rval = pd.read_excel(fname_or_df, sheet_name=sheet, index_col=None, header=None)
             if index_is_numeric(rval.iloc[:, 0]):
                 # Whoops, no index column
                 indexcol = None
             if index_is_numeric(rval.iloc[0, :]):
                 header = None
             # Now we know
-            rval = pd.read_excel(fname_or_df, index_col=indexcol, header=header)
+            rval = pd.read_excel(fname_or_df, sheet_name=sheet, index_col=indexcol, header=header)
     elif isinstance(fname_or_df, pd.DataFrame):
         rval = fname_or_df
     elif isinstance(fname_or_df, np.ndarray):
@@ -106,3 +108,24 @@ def unwrap_list(list_ish):
     while islist(list_ish) and len(list_ish)==1:
         list_ish=list_ish[0]
     return list_ish
+
+
+def matrix_as_df(matrix:np.ndarray, index)->pd.DataFrame:
+    """
+    Returns a square numpy.ndarray as a dataframe with given row/col names
+
+    :param matrix: The square numpy array
+
+    :param index: The names of the rows (which is the same as the name of the
+        columns as a list of strings).
+
+    :return: The dataframe
+    """
+    if matrix is None:
+        return None
+    elif len(matrix.shape) != 2:
+        raise ValueError("Need a 2-d array")
+    elif  matrix.shape[0] != matrix.shape[1]:
+        raise ValueError("Need a square matrix")
+
+    return pd.DataFrame(matrix, index=index, columns=index)

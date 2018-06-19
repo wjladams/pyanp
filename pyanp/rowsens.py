@@ -244,7 +244,8 @@ def influence_marginal(mat, row, influence_nodes=None, cluster_nodes=None, left_
     return rval
 
 def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=None,
-                    p0mode=None, limit_matrix_calc=calculus, graph=True, return_p0vals=False):
+                    p0mode=None, limit_matrix_calc=calculus, graph=True, return_p0vals=False,
+                    node_names=None):
     '''
     Calculates the direct influence score, i.e. it calculates anp row sensitivity for each of pvals values and
     stores the new scores of the influence_nodes.
@@ -276,6 +277,8 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
         the results, and the 2nd item as Series whose index is the names of the nodes, and whose values
         are the (x,y) position of the resting p0 value
 
+    :param node_names: If None, we use Node 0, Node 1, ... to label nodes, otherwise we use this.
+
     :return: If graph=True, we return nothing, but create a matplotlib object and call plt.show().  Otherwise
         if return_p0vals is True
         we return a pair of items.  The first is the dataframe of results, whose indices are "Node 1", "Node 2", ...
@@ -297,6 +300,8 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
     df = pd.DataFrame()
     pvals = pd.Series()
     df['x']=xs
+    if node_names is None:
+        node_names = ["Node "+str(i) for i in range(n)]
     for alt in influence_nodes:
         ys = []
         if isinstance(p0mode, int):
@@ -310,7 +315,7 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
             new_pri /= sum(new_pri)
             y = new_pri[alt]
             ys.append(y)
-        label = "Node " + str(alt)
+        label = node_names[alt]
         p0 = calcp0(mat, row, cluster_nodes, mat[row, alt], p0mode)
         x = p0
         y = linear_interpolate(xs, ys, x)

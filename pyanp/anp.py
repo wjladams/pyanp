@@ -4,7 +4,7 @@ Group enabled ANPNetwork class and supporting classes.
 '''
 from pyanp.pairwise import Pairwise
 from pyanp.prioritizer import Prioritizer, PriorityType
-from pyanp.general import islist, unwrap_list, get_matrix
+from pyanp.general import islist, unwrap_list, get_matrix, matrix_as_df
 from typing import Union
 import pandas as pd
 from copy import deepcopy
@@ -66,7 +66,8 @@ class ANPNode:
             dest_cluster = self.network._get_node_cluster(dest_node)
             src_cluster.cluster_connect(dest_cluster)
 
-    def get_node_prioritizer(self, dest_node, create=False, create_class=Pairwise)->Prioritizer:
+    def get_node_prioritizer(self, dest_node, create=False,
+                             create_class=Pairwise,  dest_is_cluster=False)->Prioritizer:
         '''
         Gets the node prioritizer for the other_node
 
@@ -74,8 +75,12 @@ class ANPNode:
 
         :return: The prioritizer if it exists, or None
         '''
-        dest_cluster = self.network._get_node_cluster(dest_node)
-        dest_name = dest_cluster.name
+        if dest_is_cluster:
+            dest_cluster = self.network.cluster_obj(dest_node)
+            dest_name = dest_cluster.name
+        else:
+            dest_cluster = self.network._get_node_cluster(dest_node)
+            dest_name = dest_cluster.name
         if dest_name not in self.node_prioritizers:
             if create:
                 prioritizer = create_class()
@@ -265,6 +270,23 @@ class ANPCluster:
             self.prioritizer = rval
         else:
             pass
+
+    def data_names(self, append_to=None):
+        '''
+        Used when exporting an Excel header for a network, for its data.
+
+        :param append_to: If not None, append header strings to this list.
+            Otherwise we create a new list to append to.
+
+        :return: List of strings of comparison name headers.  If append_to is not
+            None, we return append_to with the new string headers appended.
+        '''
+        if append_to is None:
+            append_to = []
+        if self.prioritizer is not None:
+            self.prioritizer.data_names(append_to, post_pend="wrt "+self.name)
+        return append_to
+
 
 
 def get_item(tbl:dict, key):
@@ -482,7 +504,7 @@ class ANPNetwork(Prioritizer):
         '''
         return self.alts_cluster.is_node(altname)
 
-    def add_user(self, uname):
+    def add_user(self, uname, ignore_dupe=False):
         '''
         Adds a user to the system
 
@@ -494,10 +516,13 @@ class ANPNetwork(Prioritizer):
         '''
         if islist(uname):
             for un in uname:
-                self.add_user(un)
+                self.add_user(un, ignore_dupe=ignore_dupe)
             return
         if self.is_user(uname):
-            raise ValueError("User by the name "+uname+" already existed")
+            if not ignore_dupe:
+                raise ValueError("User by the name "+uname+" already existed")
+            else:
+                return
         self.users.append(uname)
 
     def nusers(self)->int:
@@ -633,11 +658,15 @@ class ANPNetwork(Prioritizer):
                     rval[dest,src]=1
         return rval
 
-    def unscaled_supermatrix(self, username=None)->np.array:
+    def unscaled_supermatrix(self, username=None, as_df=False)->np.array:
         '''
         :param username: If None, gets it for all users.  Otherwise gets it for
             the user specified.  It can also be a list of users, in which case
             we combine them, as per the theory.
+
+        :param as_df: If True, returns as a dataframe with index and column
+            names as the names of the nodes in the network. Otherwise just
+            returns the array.
 
         :return: The unscaled supermatrix as a numpy.array of shape [nnode, nnodes]
         '''
@@ -649,13 +678,20 @@ class ANPNetwork(Prioritizer):
         for node in nodes:
             rval[:,col] = node.get_unscaled_column(username)
             col += 1
-        return rval
+        if not as_df:
+            return rval
+        else:
+            return matrix_as_df(rval, self.node_names())
 
-    def scaled_supermatrix(self, username=None)->np.ndarray:
+    def scaled_supermatrix(self, username=None, as_df=False)->np.ndarray:
         '''
         :param username: If None, gets it for all users.  Otherwise gets it for
             the user specified.  It can also be a list of users, in which case
             we combine them, as per the theory.
+
+        :param as_df: If True, returns as a dataframe with index and column
+            names as the names of the nodes in the network. Otherwise just
+            returns the array.
 
         :return: The scaled supermatrix
         '''
@@ -683,9 +719,12 @@ class ANPNetwork(Prioritizer):
                         row += 1
                 col += 1
         normalize(rval, inplace=True)
-        return rval
+        if not as_df:
+            return rval
+        else:
+            return matrix_as_df(rval, self.node_names())
 
-    def global_priorities(self, username=None):
+    def global_priority(self, username=None)->pd.Series:
         '''
         :param username: If None, gets it for all users.  Otherwise gets it for
             the user specified.  It can also be a list of users, in which case
@@ -698,17 +737,45 @@ class ANPNetwork(Prioritizer):
         node_names = self.node_names()
         return pd.Series(data=rval, index=node_names)
 
-    def limit_matrix(self, username=None):
+    def global_priority_df(self, user_infos=None)->pd.DataFrame:
+        '''
+        :param user_infos: A list of users to do this for, if None is a part
+            of this list, it means group average.  If None, it defaults to
+            None plus all users.
+
+        :return: The global priorities dataframe.  Rows are the nodes and
+            columns are the users.  The first user/column is the Group Average
+        '''
+        if user_infos is None:
+            user_infos = list(self.user_names())
+            user_infos.insert(0, None)
+        rval = pd.DataFrame()
+        for user in user_infos:
+            if user is None:
+                uname = "Group Average"
+            else:
+                uname = user
+            rval[uname] = self.global_priority(user)
+        return rval
+
+    def limit_matrix(self, username=None, as_df=False):
         '''
         :param username: If None, gets it for all users.  Otherwise gets it for
             the user specified.  It can also be a list of users, in which case
             we combine them, as per the theory.
 
+        :param as_df: If True, returns as a dataframe with index and column
+            names as the names of the nodes in the network. Otherwise just
+            returns the array.
+
         :return: The limit supermatrix
         '''
         sm = self.scaled_supermatrix(username)
         rval = self.limitcalc(sm)
-        return rval
+        if not as_df:
+            return rval
+        else:
+            return matrix_as_df(rval, self.node_names())
 
     def alt_names(self)->list:
         '''
@@ -748,7 +815,7 @@ class ANPNetwork(Prioritizer):
             # Need to synthesize using subnetworks
             return self.subnet_synthesize(username=username, ptype=ptype)
         else:
-            gp = self.global_priorities(username)
+            gp = self.global_priority(username)
             alt_names = self.alt_names()
             rval = gp[alt_names]
             if sum(rval) != 0:
@@ -766,6 +833,9 @@ class ANPNetwork(Prioritizer):
         '''
         node:ANPNode
         rval = []
+        cluster: ANPCluster
+        for cluster in self.cluster_objs():
+            cluster.data_names(rval)
         for node in self.node_objs():
             node.data_names(rval)
         return rval
@@ -829,9 +899,11 @@ class ANPNetwork(Prioritizer):
         if (wrtNode is not None) and (rowNode is not None) and (colNode is not None):
             # Node pairwise
             npri = wrtNode.get_node_prioritizer(rowNode, create=True)
+            #print("Node comparison "+name)
             if not isinstance(npri, Pairwise):
                 raise ValueError("Node prioritizer was not pairwise")
             npri.vote_series(series, row, col, createUnknownUser=True)
+            self.add_user(series.index, ignore_dupe=True)
         else:
             # Try cluster pairwise
             wrtcluster = self.cluster_obj(wrt)
@@ -843,8 +915,10 @@ class ANPNetwork(Prioritizer):
                 raise ValueError("row="+row+" was not a cluster, and the group was not a node comparison")
             if colcluster is None:
                 raise ValueError("col="+col+" was not a cluster, and the group was not a node comparison")
-            npri = self.get_cluster_prioritizer(wrtcluster)
+            npri = self.cluster_prioritizer(wrtcluster)
             npri.vote_series(series, row, col, createUnknownUser=True)
+            self.add_user(series.index, ignore_dupe=True)
+            #print("Cluster comparison "+name)
 
     def set_alts_cluster(self, new_cluster):
         '''
@@ -903,19 +977,50 @@ class ANPNetwork(Prioritizer):
                 npri = wrtcluster.prioritizer
             npri.vote_column(votes=series, alt_name=dest, createUnknownUsers=True)
 
-    def node_prioritizer(self, wrtnode, cluster):
+    def node_prioritizer(self, wrtnode=None, cluster=None):
         '''
         Gets the prioritizer for node->cluster connection
 
         :param wrtnode: The node as understood by node_obj() function.
 
         :param cluster: Cluster as understood by cluster_obj() function.
-        :return:
+
+        :return: If both wrtnode and cluster are specified, a single node prioritizer
+            is returned for that comparison (or None if there was nothing there).
+            Otherwise it returns a dictionary indexed by [wrtnode, cluster] and
+            whose values are the prioritizers for that (only the non-None ones).
         '''
-        node = self.node_obj(wrtnode)
-        cl_obj = self.cluster_obj(cluster)
-        cluster_name = cl_obj.name
-        return node.node_prioritizers[cluster_name]
+        if wrtnode is not None and cluster is not None:
+            node = self.node_obj(wrtnode)
+            cl_obj = self.cluster_obj(cluster)
+            cluster_name = cl_obj.name
+            return node.get_node_prioritizer(dest_node=cluster_name, dest_is_cluster=True)
+        elif wrtnode is not None:
+            # Have wrtnode, do not have cluster
+            rval = {}
+            for cluster in self.cluster_names():
+                pri = self.node_prioritizer(wrtnode, cluster)
+                if pri is not None:
+                    rval[(wrtnode, cluster)] = pri
+            return rval
+        elif cluster is not None:
+            # Have cluster, but not wrtnode
+            rval = {}
+            for wrtnode in self.node_names():
+                pri = self.node_prioritizer(wrtnode, cluster)
+                if pri is not None:
+                    rval[(wrtnode, cluster)] = pri
+            return rval
+        else:
+            # Both wrtnode and cluster are none, want all
+            rval = {}
+            for wrtnode in self.node_names():
+                for cluster in self.cluster_names():
+                    pri = self.node_prioritizer(wrtnode, cluster)
+                    if pri is not None:
+                        rval[(wrtnode, cluster)] = pri
+            return rval
+
 
     def subnet(self, wrtnode):
         '''
@@ -974,7 +1079,7 @@ class ANPNetwork(Prioritizer):
         :return: Nothing
         '''
         # First we need our global priorities
-        pris = self.global_priorities(username)
+        pris = self.global_priority(username)
         # Next we need the alternative priorities from each subnetwork
         subnets = {}
         node:ANPNode
@@ -1022,17 +1127,44 @@ class ANPNetwork(Prioritizer):
         """
         return self.subnet_formula(priorities, alt_scores)
 
-    def get_cluster_prioritizer(self, wrtcluster):
+    def cluster_prioritizer(self, wrtcluster=None):
         """
         Gets the prioritizer for the clusters wrt a given cluster.
 
         :param wrtcluster: WRT cluster identifier as expected by cluster_obj() function.
+            If None, then we return a dictionary indexed by cluster names and values
+            are the prioritizers
 
-        :return: THe prioritizer for that cluster.
+        :return: THe prioritizer for that cluster, or a dictionary of all cluster
+            prioritizers
         """
-        cluster = self.cluster_obj(wrtcluster)
-        return cluster.prioritizer
+        if wrtcluster is not None:
+            cluster = self.cluster_obj(wrtcluster)
+            return cluster.prioritizer
+        else:
+            rval = {}
+            for cluster in self.cluster_objs():
+                rval[cluster.name] = cluster.prioritizer
+            return rval
 
+    def to_excel(self, fname):
+        struct = pd.DataFrame()
+        cluster:ANPCluster
+        writer = pd.ExcelWriter(fname, engine='openpyxl')
+        for cluster in self.cluster_objs():
+            cluster_name = cluster.name
+            if cluster == self.alts_cluster:
+                cluster_name = "*"+str(cluster_name)
+            struct[cluster_name] = cluster.node_names()
+        struct.to_excel(writer, sheet_name="struct", index=False)
+        # Now the node connections
+        mat = self.node_connection_matrix()
+        pd.DataFrame(mat).to_excel(writer, sheet_name="connection", index=False, header=False)
+        # Lastly let's write just the comparison structure
+        cmp = self.data_names()
+        pd.DataFrame({"":cmp}).to_excel(writer, sheet_name="votes", index=False, header=True)
+        writer.save()
+        writer.close()
 
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 
@@ -1045,7 +1177,12 @@ def is_pw_col_name(col:str)->bool:
 
     :return: T/F
     """
-    return __PW_COL_REGEX.search(col) is not None
+    if col is None:
+        return False
+    elif isinstance(col, (float, int)) and np.isnan(col):
+        return False
+    else:
+        return __PW_COL_REGEX.search(col) is not None
 
 
 __RATING_COL_REGEX = re.compile('\\s+wrt\\s+')
@@ -1058,7 +1195,11 @@ def is_rating_col_name(col:str)->bool:
     :param col: The name of the column
     :return: T/F
     """
-    if is_pw_col_name(col):
+    if col is None:
+        return False
+    elif isinstance(col, (float, int)) and np.isnan(col):
+        return False
+    elif is_pw_col_name(col):
         return False
     else:
         return __RATING_COL_REGEX.search(col) is not None
@@ -1123,7 +1264,8 @@ def anp_from_excel(excel_fname:str)->ANPNetwork:
         if is_alt:
             anp.set_alts_cluster(cname)
     ## Now conneciton data
-    conn_mat = get_matrix(pd.read_excel(excel_fname, sheet_name=1))
+    conn_mat = get_matrix(excel_fname, sheet=1)
+    #print(conn_mat)
     #print(conn_mat)
     #print(conn_mat.shape)
     anp.node_connection_matrix(conn_mat)
@@ -1138,6 +1280,32 @@ def anp_from_excel(excel_fname:str)->ANPNetwork:
         elif is_rating_col_name(col):
             # print("Rating column "+col)
             anp.import_rating_series(df[col])
+        else:
+            print("Unknown column "+str(col)+" ignored")
     # Now let's setup manual rating scales
     anp_manual_scales_from_excel(anp, excel_fname)
     return anp
+
+def anp_from_dict(cluster_dict:dict)->ANPNetwork:
+    """
+    Creates an ANPNetwork from a dictionary whose keys are cluster names
+    and whose values are list of node names in that cluster
+
+    :param cluster_dict: Keys are cluster names.  If the cluster name starts
+        with *, that is the alternatives cluster (and the asterisk is removed
+        from the name).  The values are list of strings that are the names
+        of the nodes in that network
+
+    :return: The ANPNetwork with that structure
+    """
+    rval = ANPNetwork(create_alts_cluster=False)
+    for cluster, nodes in cluster_dict.items():
+        if cluster.startswith("*"):
+            # We need to trim that off
+            cluster = cluster[1:len(cluster)]
+            rval.add_cluster(cluster)
+            rval.set_alts_cluster(cluster)
+        else:
+            rval.add_cluster(cluster)
+        rval.add_node(cluster, nodes)
+    return rval
