@@ -1166,6 +1166,26 @@ class ANPNetwork(Prioritizer):
         writer.save()
         writer.close()
 
+    def node_incon_std_df(self, user_infos=None):
+        """
+        :param user_infos: A list of users to do this for, if None is a part
+            of this list, it means group average.  If None, it defaults to
+            None plus all users.
+
+        :return:
+        """
+        if user_infos is None:
+            user_infos = list(self.user_names())
+            user_infos.insert(0, None)
+        rval = pd.DataFrame()
+        # We need the name for the group (i.e. None) to be something useful)
+        for info, pw in self.node_prioritizer().items():
+            incon = [pw.incon_std(user) for user in user_infos]
+            rval[info] = pd.Series(incon, index=user_infos)
+        if None in rval.index:
+            rval = rval.rename(lambda x: x if x is not None else "Group Average")
+        return rval
+
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 
 def is_pw_col_name(col:str)->bool:

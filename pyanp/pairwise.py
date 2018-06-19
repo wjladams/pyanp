@@ -158,7 +158,7 @@ class Pairwise(Prioritizer):
         else:
             return rval
 
-    def incon_std(self, user_name)->float:
+    def incon_std(self, user_name=None)->float:
         '''
         Calculates the standard Saaty pairwise comparison inconsistency for
         a user or group of users.
@@ -173,7 +173,6 @@ class Pairwise(Prioritizer):
         '''
         matrix = self.matrix(user_name)
         return incon_std(matrix)
-
 
     def alt_index(self, alt_name_or_index)->int:
         '''
