@@ -319,15 +319,27 @@ def influence_table(mat, row, pvals=None, cluster_nodes=None, influence_nodes=No
         p0 = calcp0(mat, row, cluster_nodes, mat[row, alt], p0mode)
         x = p0
         y = linear_interpolate(xs, ys, x)
-        if graph:
-            plt.plot(xs, ys, label=label)
-            plt.scatter(x, y, label=label+" p0")
-        else:
-            df[label]=ys
-            pvals[label]=(x, y)
+        df[label] = ys
+        pvals[label] = (x, y)
+        # if graph:
+        #     plt.plot(xs, ys, label=label)
+        #     plt.scatter(x, y, label=label+" p0")
+        # else:
+        #     df[label]=ys
+        #     pvals[label]=(x, y)
+    # We need to normalize the rows
+    for row in range(len(df.index)):
+        s = sum(df.iloc[row,1:])
+        if s != 0:
+            df.iloc[row,1:] /= s
+    for label, pval in pvals.iteritems():
+        p0 = pval[0]
+        y = linear_interpolate(xs, df.loc[:,label], p0)
+        pvals[label] = (p0, y)
     if graph:
-        plt.legend()
-        plt.show()
+        # plt.legend()
+        # plt.show()
+        influence_table_plot(df, pvals)
     else:
         if return_p0vals:
             return df, pvals
