@@ -1318,7 +1318,18 @@ def anp_from_excel(excel_fname:str)->ANPNetwork:
     anp.node_connection_matrix(conn_mat)
     ## Now pairwise data
     df = pd.read_excel(excel_fname, sheet_name=2)
-    df = df.transpose()
+    row_names_with_vs = [1.0 if " vs " in name else 0.0 for name in df.index]
+    col_names_with_vs = [1.0 if " vs " in name else 0.0 for name in df.columns]
+    if len(row_names_with_vs) > 0:
+        row_percent = sum(row_names_with_vs) / len(row_names_with_vs)
+    else:
+        row_percent = 0
+    if len(col_names_with_vs) > 0:
+        col_percent = sum(col_names_with_vs) / len(col_names_with_vs)
+    else:
+        col_percent = 0
+    if row_percent > col_percent:
+        df = df.transpose()
     #display(df)
     for col in df:
         # print(col)
