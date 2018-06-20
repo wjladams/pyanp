@@ -110,7 +110,7 @@ def calculus(mat, error=1e-10, max_iters=5000, use_hierarchy_formula=True, col_s
     '''
     size = len(mat)
     diff = 0.0
-    start_pow = size * size +10
+    start_pow = 20*size * size +10
     start = _mat_pow2(mat, start_pow)
     if use_hierarchy_formula and (np.max(abs(start))==0):
         # This matrix is for a hiearchy, use that formula
@@ -152,6 +152,7 @@ def calculus(mat, error=1e-10, max_iters=5000, use_hierarchy_formula=True, col_s
                 for i in range(len(mysum)):
                     if mysum[i] == 0:
                         mysum[i] = 1
+                print("Count was "+str(count))
                 return nextp / mysum
     # If we make it here, we never converged
     raise ValueError("Did not converge within "+str(max_iters)+" iterations")
