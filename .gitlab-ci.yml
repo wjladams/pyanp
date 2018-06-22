@@ -10,7 +10,7 @@ before_script:
 pages:
   stage: deploy
   script:
-  - bundle exec jekyll build -d public
+  - bundle exec jekyll build --config _config.yml,_config_gitlab.yml -d public
   artifacts:
     paths:
     - public
