@@ -1,19 +1,13 @@
 image: ruby:2.3
 
-variables:
-  JEKYLL_ENV: production
-
-
-
 pages:
-  stage: deploy
   script:
+  - gem install jekyll
   - gem install github-pages
-  - bundle exec jekyll build -d public
+  - jekyll build -d public/
   artifacts:
     paths:
     - public
   only:
   - master
-
 
