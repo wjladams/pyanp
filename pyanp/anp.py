@@ -859,7 +859,7 @@ class ANPNetwork(Prioritizer):
             for src_node_pos in range(nnodes):
                 src_node = nodes[src_node_pos]
                 for dest_node_pos in range(nnodes):
-                    if new_mat[dest_node_pos, src_node_pos] == 1:
+                    if new_mat[dest_node_pos, src_node_pos] != 0:
                         src_node.node_connect(node_names[dest_node_pos])
         rval = np.zeros([nnodes, nnodes])
         for src_node_pos in range(nnodes):
@@ -1213,6 +1213,64 @@ class ANPNetwork(Prioritizer):
             rval = rval.rename(lambda x: x if x is not None else "Group Average")
         return rval
 
+    def set_pairwise_from_supermatrix(self, mat, username="Imported"):
+        """
+        Sets up all pairwise comparisons from supermatrix
+
+        :param mat: As numpy array
+        :return: Nothing
+        """
+        node_names = self.node_names()
+        nnodes = len(node_names)
+        ## Handle node pairwise comparisons first
+        for wrtnode_pos in range(nnodes):
+            wrtnode = node_names[wrtnode_pos]
+            offset=0
+            cluster_offsets = []
+            for cluster in self.cluster_names():
+                cluster_nodes = self.node_names(cluster)
+                npri:Pairwise
+                npri = self.node_prioritizer(wrtnode, cluster)
+                if npri is not None and isinstance(npri, Pairwise):
+                    nclusternodes=len(cluster_nodes)
+                    for node_row_pos in range(nclusternodes):
+                        for node_col_pos in range(node_row_pos+1, nclusternodes):
+                            rownode = cluster_nodes[node_row_pos]
+                            colnode = cluster_nodes[node_col_pos]
+                            vr = mat[offset+node_row_pos, wrtnode_pos]
+                            vc = mat[offset+node_col_pos, wrtnode_pos]
+                            #print("wrt="+wrtnode+" "+str(vr)+", "+str(vc)+": "+rownode+", "+colnode)
+                            if vr!=0 and vc!= 0:
+                                val = vr/vc
+                                npri.vote(username, rownode, colnode, val, createUnknownUser=True)
+                cluster_offsets.append(range(offset, offset+len(cluster_nodes)))
+                offset+=len(cluster_nodes)
+        ## Handle cluster pairwise comparisons now
+        cluster_names = self.cluster_names()
+        nclusters = len(cluster_names)
+        for wrt_cluster_pos in range(nclusters):
+            node_range = cluster_offsets[wrt_cluster_pos]
+            matrix_cols:np.ndarray
+            matrix_cols = mat[:,node_range]
+            avg_cols = matrix_cols.mean(axis=1)
+            cluster_pris = np.array([0.0]*nclusters)
+            for other_cluster_pos in range(nclusters):
+                cluster_pris[other_cluster_pos]=0
+                for node_pos in cluster_offsets[other_cluster_pos]:
+                    cluster_pris[other_cluster_pos]+=avg_cols[node_pos]
+            #Now we have cluster priorities, now we can compare
+            cpri:Pairwise
+            cpri = self.cluster_obj(wrt_cluster_pos).prioritizer
+            for row_cluster_pos in range(nclusters):
+                for col_cluster_pos in range(row_cluster_pos+1, nclusters):
+                    rowcluster = cluster_names[row_cluster_pos]
+                    colcluster = cluster_names[col_cluster_pos]
+                    vr = cluster_pris[row_cluster_pos]
+                    vc = cluster_pris[col_cluster_pos]
+                    if vr!=0 and vc!=0:
+                        val = vr/vc
+                        cpri.vote(username, rowcluster, colcluster, val, createUnknownUser=True)
+
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 
 def is_pw_col_name(col:str)->bool:
@@ -1316,7 +1374,14 @@ def anp_from_excel(excel_fname:str)->ANPNetwork:
     #print(conn_mat)
     #print(conn_mat.shape)
     anp.node_connection_matrix(conn_mat)
+    #If the matrix is full of floating points, we assume it is a scaled supermatrix
+    if conn_mat.dtype == np.dtype('float'):
+        anp.set_pairwise_from_supermatrix(conn_mat)
     ## Now pairwise data
+    xl = pd.ExcelFile(excel_fname)
+    if len(xl.sheet_names) <= 2:
+        # No pairwise data, please stop
+        return anp
     df = pd.read_excel(excel_fname, sheet_name=2)
     row_names_with_vs = [1.0 if " vs " in name else 0.0 for name in df.index]
     col_names_with_vs = [1.0 if " vs " in name else 0.0 for name in df.columns]
@@ -1367,3 +1432,66 @@ def anp_from_dict(cluster_dict:dict)->ANPNetwork:
             rval.add_cluster(cluster)
         rval.add_node(cluster, nodes)
     return rval
+
+def anp_from_scaled_supermatrix(supermatrix):
+    """
+    Creates an ANPNetwork object from a scaled supermatrix.  We do this by:
+    1. Parsing the supermatrix and using row sums across columns to figure out clusters
+    2. We use pairwise comparison objects for each node and cluster comparison
+    3. We use the ratio of the priorities from the supermatrix to get the votes
+
+    :param supermatrix: The super matrix
+    :return:
+    """
+    pass
+
+
+def clusters_from_matrix(mat):
+    if isinstance(mat, list):
+        mat = np.array(mat)
+    elif isinstance(mat, np.ndarray):
+        # Good
+        pass
+    else:
+        raise ValueError("Unknown type "+str(type(mat)))
+    first_node = 0
+    n = len(mat)
+    rval = []
+    for node_pos in range(n):
+        row = mat[node_pos]
+        mag = sum(np.abs(row))
+        if mag == 0:
+            # We have a row of all zeroes, it is a cluster by itself
+            cluster = (node_pos)
+            rval.append(cluster)
+            first_node=node_pos+1
+        else:
+            # Check the sums in the submatrix
+            submatrix = mat[first_node:(node_pos+1),:]
+            subsum=submatrix.sum(axis=0)
+            count_nonzero=0
+            last_val = None
+            all_matches = True
+            for val in subsum:
+                if val != 0:
+                    if count_nonzero>0:
+                        last_val = val
+                    elif val == last_val:
+                        # Matched sum, all good
+                        pass
+                    else:
+                        # Did not match the sum, not the row
+                        all_matches = False
+                        break
+                    count_nonzero+=1
+            # Did we match everywhere
+            if all_matches and count_nonzero > 0:
+                # We have a cluster, put everything from last node to this in it
+                rval.append(range(first_node, node_pos+1))
+                first_node = node_pos+1
+
+        # If we make it here and first_Node is not n, then last batch was not a cluster, which
+        # should never happen
+        if first_node != n:
+            raise ValueError("In finding clusters from a scaled supermatrix, could not find last cluster")
+        return rval
