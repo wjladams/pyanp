@@ -146,3 +146,14 @@ class TestANPNetwork(TestCase):
         net = anp_from_dict(clusters)
         self.assertEqual(3, net.nclusters())
         self.assertEqual(9, net.nnodes())
+
+    def test_read_supermatrix(self):
+        anp = anp_from_excel("data/anp_supermatrix_only.xlsx")
+        expected = np.array([
+            [0.2,  0.1,  0.5,  0.,   0.  ],
+            [0.3,  0.1,  0.02, 0.,   0.  ],
+            [0.1,  0.4,  0.08, 0.,   0.  ],
+            [0.2,  0.2,  0.2,  0.6,  0.3 ],
+            [0.2,  0.2,  0.2,  0.4,  0.7 ]
+        ])
+        assert_allclose(anp.scaled_supermatrix(), expected)
