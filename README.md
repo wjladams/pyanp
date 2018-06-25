@@ -31,3 +31,6 @@ and [ANP (Analytic Network Process)](https://en.wikipedia.org/wiki/Analytic_netw
 * [ANP row sensitivity Tutorial](tutorials/rowsensitivity.md)
 * [How to start contributing](tutorials/contrib.md)
 * [Programmers Reference](https://pyanp.readthedocs.io/)
+
+# Gitlab vs Github
+At the moment, main development has moved to gitlab, mirrored to github
