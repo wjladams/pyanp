@@ -33,4 +33,4 @@ and [ANP (Analytic Network Process)](https://en.wikipedia.org/wiki/Analytic_netw
 * [Programmers Reference](https://pyanp.readthedocs.io/)
 
 # Gitlab vs Github
-At the moment, main development has moved to gitlab, mirrored to github
+At the moment, main development is on github, but mirrored to gitlab
