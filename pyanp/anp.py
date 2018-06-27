@@ -1271,6 +1271,75 @@ class ANPNetwork(Prioritizer):
                         val = vr/vc
                         cpri.vote(username, rowcluster, colcluster, val, createUnknownUser=True)
 
+    def unscaled_structurematrix(self, username=None, as_df=False, add_self_connections=False):
+        rval = self.unscaled_supermatrix(username=username)
+        for row in rval:
+            for i in range(len(row)):
+                if row[i] != 0:
+                    row[i] = 1
+        if add_self_connections:
+            for i in range(len(rval)):
+                row = rval[i]
+                if len(row) > i:
+                    row[i] = 1
+        return rval
+
+    def scaled_structurematrix(self, username=None, as_df=False):
+        rval = self.unscaled_structurematrix(username=username, as_df=False)
+        normalize(rval, inplace=True)
+        return self._node_matrix_as_df(rval, as_df)
+
+    def limit_structurematrix(self, username=None, as_df=False):
+        rval = self.scaled_structurematrix(username=username, as_df=as_df)
+        rval =  self.limitcalc(rval)
+        return self._node_matrix_as_df(rval, as_df)
+
+    def structure_global_priority(self, username=None):
+        lm = self.limit_structurematrix(username)
+        rval = priority_from_limit(lm)
+        node_names = self.node_names()
+        return pd.Series(data=rval, index=node_names)
+
+    def _node_matrix_as_df(self, matrix, as_df=False):
+        if not as_df:
+            return matrix
+        else:
+            return matrix_as_df(matrix, self.node_names())
+
+    def structure_priority(self, username=None, ptype:PriorityType=None, alt_names=None)->pd.Series:
+        '''
+        '''
+        if ptype is None:
+            # Use the default priority type for this network
+            ptype = self.default_priority_type
+
+        gp = self.structure_global_priority(username)
+        if alt_names is None:
+            alt_names = self.alt_names()
+        rval = gp[alt_names]
+        if sum(rval) != 0:
+            rval /= sum(rval)
+        if ptype is not None:
+            rval = ptype.apply(rval)
+        return rval
+
+    def structure_cluster_priority(self, username=None, ptype:PriorityType=None, mean=False)->pd.Series:
+        gp = self.structure_global_priority(username)
+        cluster_names = self.cluster_names()
+        nclusters = self.nclusters()
+        rval = pd.Series(data=[0.0]*nclusters, index=cluster_names)
+        for cluster in cluster_names:
+            count=0
+            for node in self.node_names(cluster):
+                rval[cluster]+=gp[node]
+                count+=1
+            if mean and count > 0:
+                rval[cluster]/=count
+        return rval
+
+
+
+
 __PW_COL_REGEX = re.compile('\\s+vs\\s+.+\\s+wrt\\s+')
 
 def is_pw_col_name(col:str)->bool:
