@@ -183,6 +183,24 @@ class AHPTreeNode:
             self.child_prioritizer = Pairwise(self.childnames())
         self.child_prioritizer.vote(username, row, col, val, createUnknownUser=createUnknownUser)
 
+    def altpw(self, username:str, row:str, col:str, val:float, createUnknownUser=True)->None:
+        '''
+        Does a pairwise comparison of the alts.  If there is not a pairwise comparison
+        object being used to prioritize the children, we create one first.
+        :param username: The user to perform the comparison on.
+        :param row:  The name of the row alt of the comparison
+        :param col:  The name of the column alt of the comparison
+        :param val: The comparison value
+        :param createUnknownUser: If True, and username did not exist, it will be created and then the vote set.
+        Otherwise if the user did not exist, will raise an exception.
+        :return:
+        Nothing
+        :raises ValueError: If the user did not exist and createUnknownUser is False.
+        '''
+        if not isinstance(self.alt_prioritizer, Pairwise):
+            self.alt_prioritizer = Pairwise(self.alt_names)
+        self.alt_prioritizer.vote(username, row, col, val, createUnknownUser=createUnknownUser)
+
     def add_user(self, user:str)->None:
         '''
         Adds a user to the prioritizers below this
@@ -302,6 +320,29 @@ class AHPTree(Prioritizer):
         '''
         node = self.get_node(wrt)
         node.nodepw(username, row, col, val, createUnknownUser=createUnknownUser)
+
+    def altpw(self, username:str, wrt:str, row:str, col:str, val, createUnknownUser=True)->None:
+        '''
+        Pairwise compares a alts for a given user.
+
+        :param username: The name of the user to do the comparison for.  If the user doesn't exist, this will create
+        the user if createUnknownUser is True, otherwise it will raise an exception
+
+        :param wrt: The name of the wrt node.
+
+        :param row: The name of the row alt for the comparison, i.e. the dominant node.
+
+        :param col: The name of the column alt for the comparison, i.e. the recessive node.
+
+        :param val: The vote value
+
+        :return: Nothing
+
+        :raises ValueError: If wrt, row, or col node did not exist.  Also if username did not exist and
+        createUnknownUsers is False.
+        '''
+        node = self.get_node(wrt)
+        node.altpw(username, row, col, val, createUnknownUser=createUnknownUser)
 
     def isalt(self, name:str)->bool:
         '''
@@ -527,6 +568,24 @@ class AHPTree(Prioritizer):
         else:
             return None
 
+    def alt_incon_std(self, username, wrt:str=None)->float:
+        '''
+        Calcualtes the standard inconsistency score for the pairwise comparison of the alts
+        for the given user
+
+        :param username: The string name/names of users to do the inconsistency for.  If more than one user
+            we average their pairwise comparison matrices and then calculate the incosnsitency of the result.
+
+        :param wrt: The name of the node to get the inconsistency around.  If None, we use the root node.
+
+        :return: The standard Saaty inconsistency score.
+        '''
+        node = self.get_node(wrt)
+        if isinstance(node.alt_prioritizer, Pairwise):
+            return node.alt_prioritizer.incon_std(username)
+        else:
+            return None
+
     def nodes(self, undername:str=None, rval=None):
         '''
         Returns the AHPTreeNode objects under the given node, including that node
@@ -595,6 +654,26 @@ class AHPTree(Prioritizer):
             return pri.matrix(username)
         else:
             return None
+
+    def alt_pwmatrix(self, username, wrt:str)->np.ndarray:
+        '''
+        Gets the alternative pairwise comparison matrix for the alts under wrt, assuming the wrt node has
+        the alternatives under it and they are pairwise compared.
+
+        :param username: The name/names of the users to get the pairwise comparison of.
+
+        :param wrt: The name of the wrt node, or the AHPTreeNode object.
+
+        :return: A numpy array of the pairwise comparison information.  If more than one user specified in usernames param
+            we take the average of the group.
+        '''
+        node = self.get_node(wrt)
+        pri = node.alt_prioritizer
+        if isinstance(pri, Pairwise):
+            return pri.matrix(username)
+        else:
+            return None
+
 
 class _ColInfo:
     '''
@@ -773,11 +852,15 @@ def ahptree_fromdf(colinfos, currentAHPTree=None, currentNode=None) -> AHPTree:
                 wrt = info.wrt()
                 dom = info.dom()
                 rec = info.rec()
+                # We are pairwise comparing children
                 for user in colseries.index:
                     val = colseries[user]
                     # print(val)
                     if (not np.isnan(val)) and (user != "all"):
-                        currentAHPTree.nodepw(user, wrt, dom, rec, val)
+                        if dom in alts:
+                            currentAHPTree.altpw(user, wrt, dom, rec, val)
+                        else:
+                            currentAHPTree.nodepw(user, wrt, dom, rec, val)
             elif info.isdirect():
                 wrt = info.wrt()
                 node = info.node()

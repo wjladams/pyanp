@@ -68,3 +68,11 @@ class TestAHPTree(TestCase):
         mat = tree.node_pwmatrix('Bill', 'A')
         print(mat)
         print(incon_std(mat))
+
+    def test_read2(self):
+        fname = "data/AHPTreeData2.xlsx"
+        tree = ahptree_fromdf(fname)
+        nodes = ['Goal', 'A', 'B', 'C', 'D', 'E', 'F','G', 'H']
+        alts = ['Alt1', "Alt2", "Alt3"]
+        self.assertEqual(set(nodes), set(tree.nodenames()))
+        self.assertEqual(alts, tree.alt_names)
