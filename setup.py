@@ -7,7 +7,7 @@ Created October 24, 2017
 from setuptools import setup
 
 setup(name='pyanp',
-      version='0.3.0',
+      version='0.3.1',
       description='Math library for ANP/AHP calculations',
       url='https://github.com/wjladams/pyanp',
       author='Bill Adams',
