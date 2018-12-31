@@ -41,6 +41,14 @@ class Pairwise(Prioritizer):
         self.df = pd.DataFrame(data = None, columns=all_cols)
         self.priority_calc = pri_eigen
 
+    def __deepcopy__(self, memodict={}):
+        rval = Pairwise()
+        rval.alts = deepcopy(self.alts)
+        rval.df = self.df.copy()
+        rval.priority_calc = self.priority_calc
+        rval.df['Matrix'] = [deepcopy(mat) for mat in self.df['Matrix']]
+        return rval
+
 
     def is_user(self, user_name:str)->bool:
         '''
