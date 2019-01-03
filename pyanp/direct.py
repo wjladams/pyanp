@@ -18,7 +18,7 @@ class Direct(Prioritizer):
             alt_names = []
         data = []
         if len(alt_names) > 0:
-            data = [0]*len(alt_names)
+            data = [0.0]*len(alt_names)
         self.data = pd.Series(data=data, index=alt_names)
         self.loc = self.data.loc
         self.iloc = self.data.iloc
@@ -26,6 +26,10 @@ class Direct(Prioritizer):
 
     def __getitem__(self, item):
         return self.data[item]
+
+    def __len__(self):
+        return len(self.data)
+
 
     def add_alt(self, alt_name:str)->None:
         '''
