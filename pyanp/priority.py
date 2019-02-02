@@ -217,6 +217,59 @@ def incon_std(mat:np.ndarray, error:float = 1e-10, use_harker:bool = True)->floa
     return (largest_eigen_val-size)/inconsistency_divisor(mat)
 
 
+def incon_gci(mat:np.ndarray, use_harker:bool = True, only_count_nonzero=True)->float:
+    '''
+    Calculates the inconsistency of a pairwise matrix using the GCI formula from
+
+
+    :param mat: A numpy.array of shape [size,size] of pairwise comparisons.
+
+    :param use_harker: Should we apply Harker's fix before the calculation?
+
+    :param only_count_nonzero: Should we only average nonzero comparisons (this is not the official defn of gci)
+
+    :return: The inconsistency.
+    '''
+    size = mat.shape[0]
+    if use_harker:
+        mat = harker_fix(mat)
+    privec = pri_llsm(mat)
+    primat = ratio_mat(privec)
+    return mat_gci(mat, primat, only_count_nonzero=only_count_nonzero)
+
+
+def mat_gci(mat1:np.ndarray, mat2:np.ndarray, only_count_nonzero=True)->float:
+    '''
+    Calculates the GCI of two matrices
+    :param mat1:
+    :param mat2:
+    :return:
+    '''
+    size = mat1.shape[0]
+    rval = 0
+    count_nonzero = 0
+    for row in range(size):
+        for col in range(row+1, size):
+            if (mat1[row,col] != 0) and (mat2[row,col] != 0):
+                rval += np.log(mat1[row,col] / mat2[row,col]) ** 2
+                count_nonzero += 1
+    if only_count_nonzero:
+        # We only average the nonzero values.  This is different from the
+        # reference paper, but it makes more sense to me
+        if count_nonzero > 0:
+            return rval / count_nonzero
+        else:
+            # There are no non-zero values, return 0
+            return 0
+    else:
+        # We want to use the official formula from the paper
+        # so be it
+        if size > 2:
+            return 2 / ((size-1)*(size-2)) * rval
+        else:
+            return 0
+
+
 #########################################################
 ### Priority Error Calculations                  ########
 #########################################################

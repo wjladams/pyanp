@@ -156,6 +156,24 @@ class Test(unittest.TestCase):
         mat = priority.utmrowlist_to_npmatrix([2, 6, 0])
         npt.assert_almost_equal(mat, [[1, 2, 6], [1/2, 1, 0], [1/6, 0, 1]], decimal=7)
 
+    def test_gci(self):
+        mat = np.array([
+            [1, 2., 5],
+            [1/2, 1, 3],
+            [1/5., 1/3., 1]
+        ])
+        gci = priority.incon_gci(mat)
+        npt.assert_almost_equal(gci, 0.0036934)
+
+    def test_gci0(self):
+        mat = np.array([
+            [1, 2., 6],
+            [1/2, 1, 3],
+            [1/6., 1/3., 1]
+        ])
+        gci = priority.incon_gci(mat)
+        npt.assert_almost_equal(gci, 0.0)
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_pri_eigen']
