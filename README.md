@@ -1,5 +1,7 @@
 # pyanp
 
+[![DOI](https://zenodo.org/badge/112046087.svg)](https://zenodo.org/badge/latestdoi/112046087)
+
 A Python library for [AHP (Analytic Hierarchy Process)](https://en.wikipedia.org/wiki/Analytic_hierarchy_process)
 and [ANP (Analytic Network Process)](https://en.wikipedia.org/wiki/Analytic_network_process).  It should be of great use for:
 
