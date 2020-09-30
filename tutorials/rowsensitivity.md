@@ -22,6 +22,7 @@ import numpy as np
 # pip install pyanp
 # to get it
 from pyanp import priority
+from pyanp import rowsens
 ```
 
 
