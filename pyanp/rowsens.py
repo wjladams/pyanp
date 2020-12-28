@@ -459,13 +459,13 @@ def row_adjust_priority(mat, row, p, cluster_nodes=None, p0mode=None, limit_matr
     return new_pri
 
 def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.25, p0mode=0.5,
-                    limit_matrix_calc=calculus):
+                    limit_matrix_calc=calculus, node_names=None):
     '''
     Calculates fixed influence, i.e. we do row sensitivity and calculate the difference
 
     :param mat: The scaled supermatrix to perform the calculation on
 
-    :param row: The row to use for anp row sensitivity
+    :param row: The row to use for anp row sensitivity, or list of rows.
 
     :param cluster_nodes: If you wish to normalize by cluster, this should be the indices of the nodes that are
         in row's cluster (including row itself).
@@ -484,19 +484,57 @@ def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.
 
     :param limit_matrix_calc:
 
+    :param node_names: If not None, it gives us a list of names to use for our indices for the
+        returning dataframe or series.
+
     :return: A pandas.Series whose index is influence_nodes and whose values are the influence scores of those nodes
-        with respect to the row.
+        with respect to the row, if row is a single entry.  If the row param is a list, it returns a pandas.Dataframe
+        whose rows are the influence_nodes, columns are the rows, and an additional row at the end for the
+        total influence.
     '''
-    if not p0mode_is_direct(p0mode):
-        raise ValueError("p0mode must be a direct p0 value for fixed distance influence")
     if influence_nodes is None:
         n = len(mat)
         influence_nodes = [i for i in range(n) if i != row]
+    if hasattr(row, "__len__"):
+        # We have a list of rows to do this calculation on, we need to calculate for each
+        # row in the list and add that as a column to the returning dataframe
+        # Let's get some names setup
+        if node_names is None:
+            node_names = ["node "+str(i) for i in range(len(mat))]
+        df = pd.DataFrame()
+        totals = []
+        maxdiffs = []
+        for arow in row:
+            acol = influence_fixed(mat, arow, cluster_nodes, influence_nodes, delta,
+                                   p0mode, limit_matrix_calc, node_names)
+            totals.append(np.sum(np.abs(acol)))
+            maxdiffs.append(np.max(np.abs(acol)))
+            df[node_names[arow]] = acol
+        df.loc[len(df.index)] = totals
+        df.loc[len(df.index)] = maxdiffs
+        influence_names = [node_names[i] for i in influence_nodes]
+        # Let's get a unique name for the Total row, in case someone has an alternative called total
+        total_name = "Total"
+        max_name = "Max Alt Change"
+        index = influence_names + [total_name, max_name]
+        df.index = index
+        return df
+
+    if not p0mode_is_direct(p0mode):
+        raise ValueError("p0mode must be a direct p0 value for fixed distance influence")
     p0 = p0mode + delta
     old_pri = row_adjust_priority(mat, row, 0.5, cluster_nodes, p0mode=0.5, limit_matrix_calc=limit_matrix_calc)
     new_pri = row_adjust_priority(mat, row,p0, cluster_nodes, p0mode=p0mode, limit_matrix_calc=limit_matrix_calc)
+    old_pri = old_pri[influence_nodes]
+    new_pri = new_pri[influence_nodes]
+    old_sum = np.sum(np.abs(old_pri))
+    new_sum = np.sum(np.abs(new_pri))
+    if old_sum != 0:
+        old_pri = old_pri / old_sum
+    if new_sum != 0:
+        new_pri = new_pri / new_sum
     diff = new_pri - old_pri
-    rval = pd.Series(data=diff[influence_nodes], index=influence_nodes)
+    rval = pd.Series(data=diff, index=influence_nodes)
     return rval
 
 def rank_change(vec1, vec2, places_to_rank, rank_change_places=None, round_to_decimal=5):
@@ -661,3 +699,4 @@ def influence_rank(mat, row, cluster_nodes=None, influence_nodes=None,
             return rval, lower_rank_value, lower_rank_chg, upper_rank_value, upper_rank_chg
         else:
             return rval
+
