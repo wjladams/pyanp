@@ -459,7 +459,7 @@ def row_adjust_priority(mat, row, p, cluster_nodes=None, p0mode=None, limit_matr
     return new_pri
 
 def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.25, p0mode=0.5,
-                    limit_matrix_calc=calculus, node_names=None):
+                    limit_matrix_calc=calculus, node_names=None, idealize=False):
     '''
     Calculates fixed influence, i.e. we do row sensitivity and calculate the difference
 
@@ -487,6 +487,8 @@ def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.
     :param node_names: If not None, it gives us a list of names to use for our indices for the
         returning dataframe or series.
 
+    :param idealize: If True, the influence_node scores are idealized, else they are normalized
+
     :return: A pandas.Series whose index is influence_nodes and whose values are the influence scores of those nodes
         with respect to the row, if row is a single entry.  If the row param is a list, it returns a pandas.Dataframe
         whose rows are the influence_nodes, columns are the rows, and an additional row at the end for the
@@ -506,7 +508,7 @@ def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.
         maxdiffs = []
         for arow in row:
             acol = influence_fixed(mat, arow, cluster_nodes, influence_nodes, delta,
-                                   p0mode, limit_matrix_calc, node_names)
+                                   p0mode, limit_matrix_calc, node_names, idealize=idealize)
             totals.append(np.sum(np.abs(acol)))
             maxdiffs.append(np.max(np.abs(acol)))
             df[node_names[arow]] = acol
@@ -527,14 +529,35 @@ def influence_fixed(mat, row, cluster_nodes=None, influence_nodes=None, delta=0.
     new_pri = row_adjust_priority(mat, row,p0, cluster_nodes, p0mode=p0mode, limit_matrix_calc=limit_matrix_calc)
     old_pri = old_pri[influence_nodes]
     new_pri = new_pri[influence_nodes]
-    old_sum = np.sum(np.abs(old_pri))
-    new_sum = np.sum(np.abs(new_pri))
-    if old_sum != 0:
-        old_pri = old_pri / old_sum
-    if new_sum != 0:
-        new_pri = new_pri / new_sum
+    rescale(old_pri, idealize, inplace=True)
+    rescale(new_pri, idealize, inplace=True)
     diff = new_pri - old_pri
     rval = pd.Series(data=diff, index=influence_nodes)
+    return rval
+
+def rescale(avec, idealize=False, inplace=True):
+    """
+    Rescales a vector.
+    :param avec: The vector like object to rescale
+
+    :param idealize: If True we idealize avec, else we normalize
+
+    :param inplace: If True, we rescale in place, otherwise we return the rescaled vector
+
+    :return: An np.array with the normalized or idealized vector if inplace is False, otherwise
+        returns nothing and avec is changed in place
+    """
+    if inplace:
+        rval = avec
+    else:
+        rval = np.array([8]*len(avec))
+    if idealize:
+        total = np.max(np.abs(avec))
+    else:
+        total = np.sum(np.abs(avec))
+    if total != 0:
+        for i in range(len(rval)):
+            rval[i] = avec[i]/total
     return rval
 
 def rank_change(vec1, vec2, places_to_rank, rank_change_places=None, round_to_decimal=5):
