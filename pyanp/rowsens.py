@@ -357,7 +357,7 @@ def influence_table_plot(df, p0s):
     xs = df[df.columns[0]]
     for col, p0 in zip(df.columns[1:], p0s):
         plt.plot(xs, df[col], label=str(col))
-        plt.scatter(p0[0], p0[1], label=str(col)+" p0")
+        plt.scatter(p0[0], p0[1])
     plt.legend()
     plt.show()
 
