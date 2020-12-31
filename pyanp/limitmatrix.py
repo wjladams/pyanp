@@ -9,7 +9,7 @@ import pandas as pd
 from copy import deepcopy
 from pyanp.general import get_matrix
 
-def _mat_pow2(mat, power):
+def _mat_pow2(mat, power, rescale=False):
     '''
     Calculates :math:`mat^N` where :math:`N \geq power` and N is a power of 2.
     It does this by squaring mat, and squaring that, etc, until it reaches
@@ -20,6 +20,7 @@ def _mat_pow2(mat, power):
 
     :param power: The power to be greater than or equal to
 
+    :param rescale: If True, after each mult we divide the matrix by its max
     :return: The resulting power of the matrix
     '''
     last = deepcopy(mat)
@@ -27,6 +28,11 @@ def _mat_pow2(mat, power):
     count=1
     while count <= power:
         np.matmul(last, last, nextm)
+        if rescale:
+            mmax = np.max(nextm)
+            if mmax != 0:
+                factor = 1/mmax
+                np.multiply(nextm, factor, nextm)
         tmp = last
         last = nextm
         nextm = tmp
@@ -91,7 +97,32 @@ def hiearhcy_formula(mat):
     rval = normalize(summ)
     return rval
 
-def calculus(mat, error=1e-10, max_iters=5000, use_hierarchy_formula=True, col_scale_type=None):
+def _calculus_start_power(mat):
+    """
+    Calculates the needed start power for the given matrix
+    """
+    # First we find the small entries of the matrix
+    # those are the entries that are less than 1/(10*n) where n = len(mat)
+    n = len(mat)
+    if n <= 0:
+        # This matrix has no entries, just return 1 for the start_power
+        return 1
+    epsilon = 1/(20*n)
+    small_entries = []
+    for row in mat:
+        for val in row:
+            if (np.abs(val) < epsilon) and (val != 0):
+                small_entries.append(np.abs(val))
+    if len(small_entries) <= 0:
+        # We have no small entries, just return the standard start power
+        return 20 * n * n + 10
+    avg_smalls = np.mean(small_entries)
+    A = 1 / avg_smalls
+    start_power = int(A) * n * n
+    return start_power
+
+def calculus(mat, error=1e-10, max_iters=5000, use_hierarchy_formula=True, col_scale_type=None,
+             start_pow=None):
     '''
     Calculates the 'Calculus Type' limit matrix from superdecisions
 
@@ -106,12 +137,19 @@ def calculus(mat, error=1e-10, max_iters=5000, use_hierarchy_formula=True, col_s
     :param col_scale_type: A string if 'all' it scales mat1 by max(mat1) and similarly for mat2
         otherwise, it scales by column
 
+    :param start_pow: If None, we calculate the starting power to look for convergence, otherwise this
+        should be an integer > 0
     :return: The calculats limit matrix as a numpy array.
     '''
     size = len(mat)
     diff = 0.0
-    start_pow = 20*size * size +10
-    start = _mat_pow2(mat, start_pow)
+    if start_pow is None:
+        start_pow = _calculus_start_power(mat)
+    elif not isinstance(start_pow, (int)):
+        raise ValueError("start_pow must be an integer")
+    elif start_pow <= 0:
+        raise ValueError("start_pow must be > 0")
+    start = _mat_pow2(mat, start_pow, rescale=True)
     if use_hierarchy_formula and (np.max(abs(start))==0):
         # This matrix is for a hiearchy, use that formula
         # But we need to check that it really is a hierarchy and not something
@@ -155,7 +193,8 @@ def calculus(mat, error=1e-10, max_iters=5000, use_hierarchy_formula=True, col_s
                 print("Count was "+str(count))
                 return nextp / mysum
     # If we make it here, we never converged
-    raise ValueError("Did not converge within "+str(max_iters)+" iterations")
+    diffs=[normalize_cols_dist(pows[i], nextp, tmp1, tmp2, tmp3, col_scale_type) for i in range(len(pows)-1)]
+    raise ValueError("Did not converge within "+str(max_iters)+" iterations, start power="+str(start_pow)+"\nlast errors="+str(diffs))
 
 def normalize_cols_dist(mat1, mat2, tmp1=None, tmp2=None, tmp3=None, col_scale_type=None):
     '''
