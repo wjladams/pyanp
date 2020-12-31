@@ -723,3 +723,71 @@ def influence_rank(mat, row, cluster_nodes=None, influence_nodes=None,
         else:
             return rval
 
+
+def influence_perspective(matrix, rows, cluster_nodes=None, influence_nodes=None,
+                          limit_matrix_calc=calculus, graph=True,
+                          node_names=None, show_diffs=False, idealize=False,
+                          p=0.99999):
+    '''
+    Calculates the direct influence score, i.e. it calculates anp row sensitivity for each of pvals values and
+    stores the new scores of the influence_nodes.
+
+    :param mat: The scaled supermatrix to perform the calculation on
+
+    :param rows: The rows to use for anp row sensitivity and will be the columns of the result
+
+    :param cluster_nodes: If you wish to normalize by cluster, this should be the indices of the nodes that are
+        in row's cluster (including row itself).
+
+    :param influence_nodes: The indices of the nodes to calculate the influence of, with respect to row. If None
+        it calculates the influence of all nodes other than row.
+
+    :param limit_matrix_calc: A function which takes a single input, the matrix to take the limit of.
+
+    :param graph: If True, we return a matplotlib graph, otherwise we return pandas.DataFrame, p0vals
+
+    :param node_names: If None, we use Node 0, Node 1, ... to label nodes, otherwise we use this.
+
+    :param show_diffs: If True we return changes from original (and remove original column), otherwise we
+        return the new scores.
+
+    :param idealize: If True we idealize the scores, otherwise we normalize
+
+    :param p: The p value to use for the perspective calculation.
+
+    :return: If graph=True, we return the dataframe and create a matplotlib object and call plt.show().
+        Otherwise we return the pandas.DataFrame whose rows are the influence_nodes and columns are
+        the rows.  There is an additional column for original weights
+    '''
+    # If influence_nodes unset, set to opposite of nodes in our list
+    n = len(matrix)
+    if influence_nodes is None:
+        influence_nodes = [i for i in range(n) if i not in rows]
+    # Setup node_names, if not given
+    if node_names is None:
+        node_names = ["node " + str(i) for i in range(len(matrix))]
+    # First calculate the original scores
+    origs = priority(matrix, limit_calc=limit_matrix_calc)[influence_nodes]
+    result = pd.DataFrame()
+    rescale(origs, idealize, inplace=True)
+    if not show_diffs:
+        result['Originals'] = origs
+
+    for row in rows:
+        # Let's calculate the perspective score
+        pris = row_adjust_priority(matrix, row, p, cluster_nodes=cluster_nodes, p0mode=0.5,
+                                   limit_matrix_calc=limit_matrix_calc)
+        pris = pris[influence_nodes]
+        rescale(pris, idealize, inplace=True)
+        if show_diffs:
+            result[node_names[row]] = pris - origs
+        else:
+            result[node_names[row]] = pris
+    # Let's update our row names to be correct
+    result.index = [node_names[i] for i in influence_nodes]
+    if graph:
+        result.plot.bar()
+        plt.show()
+        return result
+    else:
+        return result
